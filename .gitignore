@@ -21,3 +21,7 @@ PyWhatKit_DB.txt
 assets/detection_*.jpg
 assets/photo_*.jpg
 venv_trash/
+
+# Backups and Alternative OS builds
+.git_backup/
+Windows/
