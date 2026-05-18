@@ -14,7 +14,7 @@
      \/__/         \/__/         \|__|                       \/__/         \/__/    
 </pre>
 
-<h1>⚡ JARVIS V2: THE CYBERNETIC LOCAL GATEWAY ⚡</h1>
+<h1>⚡ Open-Nova ⚡</h1>
 
 <b>The autonomous, local-first, multimodal OS controller that breaks the matrix.</b>
 
