@@ -7,3 +7,4 @@
 [2026-05-18T09:06:00Z] Commit 7: docs: update readme with full skill extensibility handbook
 [2026-05-18T09:12:00Z] Commit 8: test: build core unit-test skeletons in verify_refactor.py
 [2026-05-18T09:18:00Z] Commit 9: feat: define base Skill abstraction framework in core/skill.py
+[2026-05-18T09:24:00Z] Commit 10: feat: implement centralized registry loader inside core/registry.py
