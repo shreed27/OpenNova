@@ -37,3 +37,4 @@
 [2026-05-18T12:06:00Z] Commit 37: refactor: move file summarization routines into skills/text_ops.py
 [2026-05-18T12:12:00Z] Commit 38: feat: add standard shell command executing tool to TextSkill
 [2026-05-18T12:18:00Z] Commit 39: refactor: optimize file path mapping inside file_ops.py helper
+[2026-05-18T12:24:00Z] Commit 40: fix: prevent recursive directory execution in TextSkill CLI runner
