@@ -47,3 +47,4 @@
 [2026-05-18T13:06:00Z] Commit 47: feat: implement take_photo tool with video capture warmup cycles
 [2026-05-18T13:12:00Z] Commit 48: fix: provide elegant fallbacks for camera permissions on macOS
 [2026-05-18T13:18:00Z] Commit 49: feat: import PyTorch and ultralytics bindings in detection_skill.py
+[2026-05-18T13:24:00Z] Commit 50: feat: configure Metal Performance Shaders (MPS) Apple Silicon acceleration
