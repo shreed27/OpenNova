@@ -49,3 +49,4 @@
 [2026-05-18T13:18:00Z] Commit 49: feat: import PyTorch and ultralytics bindings in detection_skill.py
 [2026-05-18T13:24:00Z] Commit 50: feat: configure Metal Performance Shaders (MPS) Apple Silicon acceleration
 [2026-05-18T13:30:00Z] Commit 51: feat: implement detect_objects visual YOLOv8 scanner
+[2026-05-18T13:36:00Z] Commit 52: feat: save annotated visual camera frames to assets directory
