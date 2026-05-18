@@ -26,3 +26,4 @@
 [2026-05-18T11:00:00Z] Commit 26: feat: build core key-value memory registry in skills/memory_ops.py
 [2026-05-18T11:06:00Z] Commit 27: feat: implement remember_fact memory utility tool
 [2026-05-18T11:12:00Z] Commit 28: feat: implement retrieve_memory utility to query historical logs
+[2026-05-18T11:18:00Z] Commit 29: feat: add forget_fact utility to remove selected memories
