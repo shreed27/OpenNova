@@ -72,3 +72,4 @@
 [2026-05-18T15:36:00Z] Commit 72: feat: animate real-time bar fluctuation using QTimer ticks
 [2026-05-18T15:42:00Z] Commit 73: refactor: align sidebar bounding boxes relative to central reactor
 [2026-05-18T15:48:00Z] Commit 74: style: polish reactor glow effect boundaries and dash patterns
+[2026-05-18T15:54:00Z] Commit 75: perf: reduce main thread CPU utilization of HUD QTimer animations
