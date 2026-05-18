@@ -45,3 +45,4 @@
 [2026-05-18T12:54:00Z] Commit 45: refactor: unify coordinate mappings in weather skill
 [2026-05-18T13:00:00Z] Commit 46: feat: initialize opencv-python frame capturing in camera_skill.py
 [2026-05-18T13:06:00Z] Commit 47: feat: implement take_photo tool with video capture warmup cycles
+[2026-05-18T13:12:00Z] Commit 48: fix: provide elegant fallbacks for camera permissions on macOS
