@@ -59,3 +59,4 @@
 [2026-05-18T14:18:00Z] Commit 59: test: execute vision verification pipeline in verify_new_skills.py
 [2026-05-18T14:24:00Z] Commit 60: docs: document YOLO device selection boundaries in detection comments
 [2026-05-18T14:30:00Z] Commit 61: feat: build parent QMainWindow frame overlay in gui/app.py
+[2026-05-18T14:36:00Z] Commit 62: feat: configure transparent background and frameless window flags
