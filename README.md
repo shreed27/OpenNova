@@ -29,9 +29,9 @@
 
 > **"Wake up, Samurai. We have a system to automate."**
 
-**JARVIS** is an aggressively engineered, fully modular AI orchestrator built for the cracked dev. No bloated web wrappers. No mandatory subscriptions. Just pure, unadulterated Python hooking raw LLM power directly into your OS.
+**Open-Nova** is an aggressively engineered, fully modular AI orchestrator built for the cracked dev. No bloated web wrappers. No mandatory subscriptions. Just pure, unadulterated Python hooking raw LLM power directly into your OS.
 
-Inspired by the OG viral agents, JARVIS turns your local rig into a highly autonomous node. Whether you are running Llama 3 locally via Ollama, pushing 1000 t/s with Groq, or streaming live multimodal websockets with Gemini, JARVIS controls your machine, reads your files, and executes your will.
+Inspired by the OG viral agents, Nova turns your local rig into a highly autonomous node. Whether you are running Llama 3 locally via Ollama, pushing 1000 t/s with Groq, or streaming live multimodal websockets with Gemini, Nova controls your machine, reads your files, and executes your will.
 
 ## 🔥 WHY IT'S CRACKED
 
@@ -40,11 +40,11 @@ Inspired by the OG viral agents, JARVIS turns your local rig into a highly auton
   * Features a **Real-Time PyAudio Arc Reactor** that physically pulses to your voice.
   * **Live Hardware Telemetry** (`psutil`) streaming CPU, RAM, and Disk metrics directly to the HUD.
 * 📱 **TELEGRAM REMOTE C&C:** Securely text your machine from your phone. Take remote screenshots, run shell commands, or query local documents while you're offline.
-* ⚡ **DYNAMIC SKILL INJECTION:** Drop a `.py` file in the `/skills` folder. JARVIS instantly parses it, generates the OpenAI tool schema, and equips the ability in real-time.
+* ⚡ **DYNAMIC SKILL INJECTION:** Drop a `.py` file in the `/skills` folder. Nova instantly parses it, generates the OpenAI tool schema, and equips the ability in real-time.
 
 ## 🛠️ THE ARSENAL
 
-Out of the box, JARVIS is weaponized with:
+Out of the box, Nova is weaponized with:
 - `system_ops.py` & `file_ops.py`: Brightness, volume, file CRUD, app execution.
 - `camera_skill.py` & `screenshot_ops.py`: Local webcam capture and screen awareness.
 - `detection_skill.py`: YOLO-based real-time object detection.
@@ -56,7 +56,7 @@ Out of the box, JARVIS is weaponized with:
 ### 1. Initialize the Node
 ```bash
 git clone https://github.com/shreed27/OpenNova.git
-cd JARVIS
+cd Nova
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
