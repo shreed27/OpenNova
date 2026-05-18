@@ -1,41 +1,59 @@
 <div align="center">
-  <h1>🤖 JARVIS PROTOCOL v2.0</h1>
-  <p><b>The local, autonomous, multimodal AI gateway for your machine.</b></p>
-  
-  [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Local AI](https://img.shields.io/badge/Ollama-Local_First-000000.svg)](https://ollama.ai)
-  [![Status](https://img.shields.io/badge/Status-Cracked-ff69b4.svg)]()
+
+<pre>
+      ___           ___           ___           ___           ___           ___     
+     /\  \         /\  \         /\  \         /\__\         /\  \         /\  \    
+    _\:\  \       /::\  \       /::\  \       /:/  /        _\:\  \       /::\  \   
+   /\ \:\  \     /:/\:\  \     /:/\:\  \     /:/  /        /\ \:\  \     /:/\ \  \  
+  _\:\ \:\  \   /::\~\:\  \   /::\~\:\  \   /:/__/  ___   _\:\ \:\  \   _\:\~\ \  \ 
+ /\ \:\ \:\__\ /:/\:\ \:\__\ /:/\:\ \:\__\  |:|  | /\__\ /\ \:\ \:\__\ /\ \:\ \:\__\
+ \:\ \:\/:/  / \/__\:\/:/  / \/_|::\/:/  /  |:|  |/:/  / \:\ \:\/:/  / \:\ \:\ \/__/
+  \:\ \::/  /       \::/  /     |:|::/  /   |:|__/:/  /   \:\ \::/  /   \:\ \:\__\  
+   \:\/:/  /        /:/  /      |:|\/__/     \::::/__/     \:\/:/  /     \:\/:/  /  
+    \::/  /        /:/  /       |:|  |        ~~~~          \::/  /       \::/  /   
+     \/__/         \/__/         \|__|                       \/__/         \/__/    
+</pre>
+
+<h1>⚡ JARVIS V2: THE CYBERNETIC LOCAL GATEWAY ⚡</h1>
+
+<b>The autonomous, local-first, multimodal OS controller that breaks the matrix.</b>
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-cyan.svg?style=for-the-badge&logo=python)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-magenta.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Local AI](https://img.shields.io/badge/Ollama-Offline_First-000000.svg?style=for-the-badge&logo=ollama)](https://ollama.ai)
+[![Cyberpunk](https://img.shields.io/badge/Vibe-Cyberpunk-ff0055.svg?style=for-the-badge)]()
+
 </div>
 
----
+<br>
 
-**JARVIS** is not just another wrapper. It is a highly extensible, modular, and autonomous AI assistant designed to run as a secure local gateway on your machine. Inspired by the OG open-source agent frameworks, JARVIS connects state-of-the-art LLMs directly to your local file system, OS commands, and external messaging platforms.
+> **"Wake up, Samurai. We have a system to automate."**
 
-It features a **Futuristic Cyber HUD** (built in PyQt6) with real-time mic visualizers and system hardware telemetry, a **Multi-Brain Engine** supporting local and remote models, and a **Telegram Remote Gateway** so you can securely command your Mac from your phone.
+**JARVIS** is an aggressively engineered, fully modular AI orchestrator built for the cracked dev. No bloated web wrappers. No mandatory subscriptions. Just pure, unadulterated Python hooking raw LLM power directly into your OS.
 
-## 🌟 Elite Features
+Inspired by the OG viral agents, JARVIS turns your local rig into a highly autonomous node. Whether you are running Llama 3 locally via Ollama, pushing 1000 t/s with Groq, or streaming live multimodal websockets with Gemini, JARVIS controls your machine, reads your files, and executes your will.
 
-- **🧠 Multi-Brain Architecture**: Instantly switch between **Groq**, **Ollama** (100% local/offline), **Gemini** (Live Multimodal), and **OpenAI**. No vendor lock-in.
-- **📱 Telegram Remote Gateway**: Text your home computer to take screenshots, run shell commands, or trigger complex skills securely from anywhere.
-- **🖥️ Cybernetic HUD**: An insanely polished PyQt6 interface featuring:
-  - **Voice-Pulse Arc Reactor**: The core dynamically expands and glows based on your real-time mic audio levels (RMS).
-  - **Live Hardware Telemetry**: Real-time CPU, RAM, and Disk metrics feeding directly into the UI.
-  - **Glassmorphic Terminal**: Drop down into the built-in terminal and chat with JARVIS via text without leaving the HUD.
-- **🔌 Modular Skill System**: Drop a new Python file into the `skills/` directory and JARVIS learns a new capability instantly.
+## 🔥 WHY IT'S CRACKED
 
-## 🛠️ The Arsenal (Skills)
+* 🧠 **MULTI-BRAIN HYPER-ROUTER:** Seamlessly switch between `groq`, `ollama` (100% offline), `openai`, and `gemini`. Hot-swap models in a `.env` file without breaking a sweat.
+* 🖥️ **PYQT6 CYBER HUD:** An insanely polished, transparent glassmorphic UI. 
+  * Features a **Real-Time PyAudio Arc Reactor** that physically pulses to your voice.
+  * **Live Hardware Telemetry** (`psutil`) streaming CPU, RAM, and Disk metrics directly to the HUD.
+* 📱 **TELEGRAM REMOTE C&C:** Securely text your machine from your phone. Take remote screenshots, run shell commands, or query local documents while you're offline.
+* ⚡ **DYNAMIC SKILL INJECTION:** Drop a `.py` file in the `/skills` folder. JARVIS instantly parses it, generates the OpenAI tool schema, and equips the ability in real-time.
 
-JARVIS comes loaded with powerful capabilities out of the box:
-- **System Control**: Screen brightness, volume control, file manipulation, and direct application execution (`system_ops`, `file_ops`).
-- **Vision & Sensing**: YOLO-powered real-time object detection (`detection_skill`), Webcam capture (`camera_skill`), and screen awareness (`screenshot_ops`).
-- **Communication Automation**: Headless WhatsApp message dispatching (`whatsapp_skill`) and Email management (`email_ops`).
-- **Web Intelligence**: Search the web and scrape data autonomously (`web_ops`).
-- **Gemini Live**: Native WebSockets connection to Gemini 2.0 Flash for real-time video/audio conversation (`gemini_live_skill`).
+## 🛠️ THE ARSENAL
 
-## 🚀 Quick Start
+Out of the box, JARVIS is weaponized with:
+- `system_ops.py` & `file_ops.py`: Brightness, volume, file CRUD, app execution.
+- `camera_skill.py` & `screenshot_ops.py`: Local webcam capture and screen awareness.
+- `detection_skill.py`: YOLO-based real-time object detection.
+- `whatsapp_skill.py`: Headless WhatsApp automation.
+- `gemini_live_skill.py`: Next-Gen WebSocket A/V streaming.
 
-### 1. Clone & Setup
+## 🚀 JACKING IN (QUICK START)
+
+### 1. Initialize the Node
 ```bash
 git clone https://github.com/shreed27/OpenNova.git
 cd JARVIS
@@ -44,49 +62,51 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configure Environment
-Create a `.env` file in the root directory. Mix and match the keys for the brains and gateways you want to use.
+### 2. Configure Neural Links
+Create `.env` in the root. Supply what you want, ignore what you don't.
 ```ini
-# --- THE BRAIN ---
-# Set to: groq, ollama, gemini, or openai
+# CORE PROTOCOL [groq | ollama | gemini | openai]
 JARVIS_BRAIN=groq
 
-GROQ_API_KEY=your_groq_key
-# GEMINI_API_KEY=your_gemini_key
-# OPENAI_API_KEY=your_openai_key
-# OLLAMA_MODEL=llama3 (defaults to localhost:11434)
+# KEYS TO THE CITY
+GROQ_API_KEY=gsk_your_key_here
+# GEMINI_API_KEY=AIza...
+# OPENAI_API_KEY=sk-...
 
-# --- THE GATEWAY (Optional) ---
-# TELEGRAM_BOT_TOKEN=your_bot_token_here
+# OLLAMA OVERRIDE (For local runners)
+OLLAMA_MODEL=llama3
+
+# TELEGRAM C&C LINK (Optional)
+# TELEGRAM_BOT_TOKEN=your_bot_token
 ```
 
-### 3. Initialize the Protocol
-**Launch Full HUD (Voice + Text + Telemetry):**
+### 3. Execute
+**Boot Full Cyber HUD (Voice + Telemetry + Terminal):**
 ```bash
 python main.py
 ```
-- The HUD will boot up.
-- Speak naturally to interact. The Arc Reactor will pulse with your voice.
-- Click the reactor to pause voice recognition and type directly into the terminal.
+*HUD loads.* Speak your command. Watch the reactor pulse. Click the core to drop into secure text-only override and type commands directly into the terminal!
 
-**Launch Stealth Text-Only Mode:**
+**Boot Stealth Mode (CLI Only):**
 ```bash
 python main.py --text
 ```
 
-## 🏗️ Architecture
-```
+## 🏗️ SYSTEM ARCHITECTURE
+```text
 JARVIS/
-├── core/               # The Engine (BrainManager, SkillRegistry, Voice I/O)
-├── gui/                # Cyber HUD (PyQt6 rendering, PyAudio threads, Telemetry)
-├── skills/             # The Arsenal (Drop-in Python modules)
-└── main.py             # Entry point & Thread Orchestrator
+├── core/               # Neural Pathways (BrainManager, Registry, Audio I/O)
+├── gui/                # Cybernetic HUD (PyQt6 rendering, PyAudio threaded streams)
+├── skills/             # Modular Arsenals (Auto-loaded tools)
+└── main.py             # Main Orchestration Loop
 ```
 
-## 🛡️ Security Warning
-JARVIS has the ability to execute shell commands, read files, and manipulate your system. Do **not** expose the Telegram Gateway without properly securing your bot token, and be extremely careful when granting JARVIS root-level access. You are building an autonomous agent on your local hardware. **With great power comes great responsibility.**
+## ⚠️ WARNING
+This software grants an autonomous agent root-level access to execute shell commands, edit files, and send messages on your hardware. **DO NOT** expose your Telegram Bot Token or run experimental skills without checking the code. 
+
+**With absolute power comes absolute responsibility. Don't brick your rig.**
 
 ---
 <div align="center">
-<i>Built for the hackers, by the hackers.</i>
+<i>Built for the hackers, by the hackers. Code is Law.</i>
 </div>
