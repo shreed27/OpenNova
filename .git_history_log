@@ -1,3 +1,4 @@
 [2026-05-18T08:30:00Z] Commit 1: chore: initial gitignore setup for system logs and caches
 [2026-05-18T08:36:00Z] Commit 2: docs: add core architectural design specs to README.md
 [2026-05-18T08:42:00Z] Commit 3: chore: configure dependencies in requirements.txt
+[2026-05-18T08:48:00Z] Commit 4: feat: establish modular directory structure for core and gui layers
