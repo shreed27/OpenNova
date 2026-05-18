@@ -1,9 +1,14 @@
 import sys
-import random
 import math
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QLabel
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QPointF, QRectF
-from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QPolygonF, QLinearGradient
+import struct
+import psutil
+from queue import Empty
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QHBoxLayout, 
+    QVBoxLayout, QTextEdit, QLineEdit, QLabel
+)
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QPointF, QRectF
+from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QPolygonF, QFont
 
 # --- Colors ---
 PRIMARY_COLOR = QColor("#00FFFF")  # Cyan
@@ -11,15 +16,61 @@ ACCENT_COLOR = QColor("#FFFFFF")   # White
 BG_COLOR = QColor("#000000")       # Black
 WARNING_COLOR = QColor("#FFA500")  # Orange (for Pause)
 
+# --- Mic Monitor Thread ---
+class AudioMonitorThread(QThread):
+    mic_level_signal = pyqtSignal(float)
+    
+    def __init__(self):
+        super().__init__()
+        self.running = True
+        
+    def run(self):
+        try:
+            import pyaudio
+            p = pyaudio.PyAudio()
+            stream = p.open(format=pyaudio.paInt16, channels=1, rate=16000,
+                            input=True, frames_per_buffer=1024)
+        except Exception as e:
+            print(f"[GUI] Audio monitor failed to start: {e}")
+            return
+            
+        while self.running:
+            try:
+                data = stream.read(1024, exception_on_overflow=False)
+                count = len(data) // 2
+                format_str = f"{count}h"
+                shorts = struct.unpack(format_str, data)
+                sum_squares = sum(s * s for s in shorts)
+                rms = math.sqrt(sum_squares / count) if count > 0 else 0
+                
+                # Normalize 0.0 to 1.0
+                normalized = min(1.0, rms / 3000.0)
+                self.mic_level_signal.emit(normalized)
+            except Exception:
+                pass
+            
+            self.msleep(20)
+            
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
 class HexagonPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumWidth(200)
+        self.setMinimumWidth(250)
         self.opacity = 50
         self.increasing = True
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.animate)
-        self.timer.start(100) # Update opacity
+        self.timer.start(100)
+        
+        # We can add a label here
+        layout = QVBoxLayout(self)
+        self.title = QLabel("PROCESS MONITOR")
+        self.title.setStyleSheet("color: #00FFFF; font-family: 'Courier New'; font-weight: bold;")
+        self.title.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.title)
 
     def animate(self):
         if self.increasing:
@@ -34,13 +85,8 @@ class HexagonPanel(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        pen = QPen(PRIMARY_COLOR)
-        pen.setWidth(2)
-        painter.setPen(pen)
-        
-        # Draw grid of hexagons
-        size = 30
-        rows = 4
+        size = 25
+        rows = 6
         cols = 3
         x_offset = 20
         y_offset = 50
@@ -48,11 +94,9 @@ class HexagonPanel(QWidget):
         for r in range(rows):
             for c in range(cols):
                 color = QColor(PRIMARY_COLOR)
-                # Randomize opacity slightly based on position to create "glitch" or wave effect logic could go here
-                # For now use global pulsing opacity
                 current_opacity = self.opacity
                 if (r + c) % 2 == 0:
-                   current_opacity = max(50, current_opacity - 50)
+                   current_opacity = max(30, current_opacity - 50)
                 
                 color.setAlpha(current_opacity)
                 painter.setPen(QPen(color, 2))
@@ -67,8 +111,7 @@ class HexagonPanel(QWidget):
     def draw_hexagon(self, painter, x, y, size):
         points = []
         for i in range(6):
-            angle_deg = 60 * i
-            angle_rad = math.radians(angle_deg)
+            angle_rad = math.radians(60 * i)
             px = x + size * math.cos(angle_rad)
             py = y + size * math.sin(angle_rad)
             points.append(QPointF(px, py))
@@ -77,45 +120,70 @@ class HexagonPanel(QWidget):
 class TelemetryPanel(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumWidth(200)
-        self.bar_heights = [20, 40, 60, 30]
+        self.setMinimumWidth(250)
+        self.cpu = 0
+        self.ram = 0
+        self.disk = 0
+        self.mic = 0
+        
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.animate)
-        self.timer.start(100)
+        self.timer.timeout.connect(self.update_telemetry)
+        self.timer.start(500)
 
-    def animate(self):
-        # Randomize bar heights
-        self.bar_heights = [random.randint(10, 100) for _ in range(4)]
+    def update_telemetry(self):
+        self.cpu = psutil.cpu_percent()
+        self.ram = psutil.virtual_memory().percent
+        self.disk = psutil.disk_usage('/').percent
+        self.update()
+        
+    def set_mic_level(self, level):
+        self.mic = level * 100
+        # Telemetry updates every 500ms, but mic updates faster. 
+        # We can just let paintEvent handle it.
         self.update()
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         
-        # Draw Circuit Lines (Static decoration)
-        pen = QPen(ACCENT_COLOR)
-        pen.setWidth(2)
-        painter.setPen(pen)
+        # Draw Labels and Bars
+        labels = ["CPU", "RAM", "DSK", "MIC"]
+        values = [self.cpu, self.ram, self.disk, self.mic]
         
-        path_points = [
-            QPointF(10, 200), QPointF(50, 240), QPointF(150, 240), QPointF(180, 200)
-        ]
-        painter.drawPolyline(QPolygonF(path_points))
+        bar_width = 25
+        gap = 20
+        start_x = 30
+        base_y = 220
+        max_h = 150
         
-        # Draw Equalizer
-        bar_width = 30
-        gap = 10
-        start_x = 20
-        base_y = 150
+        painter.setFont(QFont("Courier New", 10, QFont.Weight.Bold))
         
-        painter.setBrush(QBrush(PRIMARY_COLOR))
-        painter.setPen(Qt.PenStyle.NoPen)
-        
-        for i, h in enumerate(self.bar_heights):
+        for i in range(4):
             x = start_x + i * (bar_width + gap)
-            # Draw bar upwards from base_y
-            painter.drawRect(QRectF(x, base_y - h, bar_width, h))
-
+            val = values[i]
+            
+            # Label
+            painter.setPen(PRIMARY_COLOR)
+            painter.drawText(int(x), int(base_y + 20), labels[i])
+            painter.drawText(int(x), int(base_y + 40), f"{int(val)}%")
+            
+            # Background Track
+            painter.setBrush(QBrush(QColor(10, 10, 10, 200)))
+            painter.setPen(QPen(PRIMARY_COLOR, 1))
+            painter.drawRect(QRectF(x, base_y - max_h, bar_width, max_h))
+            
+            # Active Bar
+            h = (val / 100.0) * max_h
+            if val > 85:
+                color = QColor("#FF3333") # Red critical
+            elif val > 60:
+                color = WARNING_COLOR # Orange
+            else:
+                color = PRIMARY_COLOR
+                
+            painter.setBrush(QBrush(color))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawRect(QRectF(x + 1, base_y - h, bar_width - 2, h))
 
 class CentralReactor(QWidget):
     def __init__(self, parent=None):
@@ -123,16 +191,22 @@ class CentralReactor(QWidget):
         self.angle_outer = 0
         self.angle_inner = 0
         self.is_paused = False
+        self.mic_level = 0.0
         
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.animate)
-        self.timer.start(30) # ~30fps
+        self.timer.start(30)
+
+    def set_mic_level(self, level):
+        self.mic_level = level
 
     def animate(self):
         if not self.is_paused:
-            self.angle_outer = (self.angle_outer + 2) % 360  # Clockwise
-            self.angle_inner = (self.angle_inner - 4) % 360  # Counter-Clockwise
-            self.update()
+            # Spin faster when talking
+            speed_boost = 1 + (self.mic_level * 5)
+            self.angle_outer = (self.angle_outer + 2 * speed_boost) % 360
+            self.angle_inner = (self.angle_inner - 4 * speed_boost) % 360
+        self.update()
 
     def set_paused(self, paused):
         self.is_paused = paused
@@ -145,17 +219,18 @@ class CentralReactor(QWidget):
         center_x = self.width() / 2
         center_y = self.height() / 2
         
-        # Determine Color based on Pause state
         main_color = WARNING_COLOR if self.is_paused else PRIMARY_COLOR
         
         # 1. Draw Core (Solid Circle)
         painter.setPen(Qt.PenStyle.NoPen)
         painter.setBrush(QBrush(main_color))
-        core_radius = 20
-        # Pulse effect for core
+        core_radius = 25
+        
         if not self.is_paused:
              pulse = (math.sin(self.angle_outer * 0.1) + 1) * 5
-             painter.drawEllipse(QPointF(center_x, center_y), core_radius + pulse, core_radius + pulse)
+             mic_boost = self.mic_level * 40 # Expand heavily on voice
+             total_radius = core_radius + pulse + mic_boost
+             painter.drawEllipse(QPointF(center_x, center_y), total_radius, total_radius)
         else:
              painter.drawEllipse(QPointF(center_x, center_y), core_radius, core_radius)
 
@@ -165,11 +240,10 @@ class CentralReactor(QWidget):
         pen = QPen(main_color)
         pen.setWidth(12)
         pen.setCapStyle(Qt.PenCapStyle.FlatCap)
-        # Dash pattern: [dash_length, space_length, ...]
         pen.setDashPattern([10, 10]) 
         painter.setPen(pen)
         
-        radius_mid = 100
+        radius_mid = 110
         painter.save()
         painter.translate(center_x, center_y)
         painter.rotate(self.angle_outer)
@@ -177,12 +251,12 @@ class CentralReactor(QWidget):
         painter.restore()
 
         # 3. Inner Ring (Thin Dashed)
-        pen = QPen(ACCENT_COLOR) # White
+        pen = QPen(ACCENT_COLOR)
         pen.setWidth(4)
         pen.setDashPattern([5, 5])
         painter.setPen(pen)
         
-        radius_inner = 70
+        radius_inner = 80
         painter.save()
         painter.translate(center_x, center_y)
         painter.rotate(self.angle_inner)
@@ -194,54 +268,124 @@ class CentralReactor(QWidget):
         pen.setWidth(3)
         pen.setStyle(Qt.PenStyle.SolidLine)
         painter.setPen(pen)
-        radius_outer = 130
+        radius_outer = 140
         
         rect_outer = QRectF(center_x - radius_outer, center_y - radius_outer, 2*radius_outer, 2*radius_outer)
-        # Draw two arcs
-        start_angle = 30 * 16 # sixteenths of a degree? No, specify in degrees * 16 usually for some QT functions, but drawArc takes startAngle and spanAngle in 1/16th degrees
-        # drawArc(rect, int startAngle, int spanAngle)
-        # 45 degrees to 135 degrees
-        
         painter.drawArc(rect_outer, 45 * 16, 90 * 16)
         painter.drawArc(rect_outer, 225 * 16, 90 * 16)
 
 
 class JarvisGUI(QMainWindow):
-    def __init__(self, pause_event):
+    def __init__(self, pause_event, command_queue=None, log_queue=None):
         super().__init__()
         self.pause_event = pause_event
+        self.command_queue = command_queue
+        self.log_queue = log_queue
         self.is_paused = False
         
-        self.setWindowTitle("JARVIS HUD")
-        self.resize(1000, 600)
+        self.setWindowTitle("JARVIS PROTOCOL v2.0")
+        self.resize(1100, 750)
         
-        # Frameless and Black Background
+        # Styling
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-        self.setStyleSheet("background-color: black;")
+        self.setStyleSheet("background-color: #050505;")
         
         # Main Layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(15, 15, 15, 15)
         
-        # Left Panel (Hexagons)
+        # Header
+        header = QLabel("JARVIS PROTOCOL v2.0 :: SECURE LINK ACTIVE")
+        header.setStyleSheet("color: #00FFFF; font-family: 'Courier New'; font-size: 16px; font-weight: bold;")
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(header)
+        
+        # Top HUD row
+        hud_layout = QHBoxLayout()
         self.left_panel = HexagonPanel()
-        main_layout.addWidget(self.left_panel)
-        
-        # Center (Reactor)
         self.reactor = CentralReactor()
-        main_layout.addWidget(self.reactor, stretch=2) # Give center more space
-        
-        # Right Panel (Telemetry)
         self.right_panel = TelemetryPanel()
-        main_layout.addWidget(self.right_panel)
         
-        # Click listener shortcut (using mousePressEvent on window)
+        hud_layout.addWidget(self.left_panel)
+        hud_layout.addWidget(self.reactor, stretch=2)
+        hud_layout.addWidget(self.right_panel)
+        main_layout.addLayout(hud_layout, stretch=3)
+        
+        # Bottom Terminal Console
+        self.terminal = QTextEdit()
+        self.terminal.setReadOnly(True)
+        self.terminal.setStyleSheet("""
+            QTextEdit {
+                background-color: rgba(10, 15, 15, 200);
+                color: #00FFCC;
+                font-family: 'Courier New', monospace;
+                font-size: 14px;
+                border: 1px solid #005555;
+                border-radius: 5px;
+                padding: 10px;
+            }
+        """)
+        self.terminal.append("[SYS] Protocol Initialized. Brain connected.")
+        main_layout.addWidget(self.terminal, stretch=1)
+        
+        # Bottom Command Input
+        self.input_bar = QLineEdit()
+        self.input_bar.setPlaceholderText("Enter command to JARVIS... (Press Enter to execute)")
+        self.input_bar.setStyleSheet("""
+            QLineEdit {
+                background-color: rgba(20, 25, 25, 220);
+                color: #FFFFFF;
+                font-family: 'Courier New', monospace;
+                font-size: 15px;
+                border: 1px solid #00FFFF;
+                border-radius: 5px;
+                padding: 8px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #00FFFF;
+                background-color: rgba(30, 35, 35, 240);
+            }
+        """)
+        self.input_bar.returnPressed.connect(self.submit_command)
+        main_layout.addWidget(self.input_bar)
+        
+        # Setup Mic Monitor
+        self.mic_thread = AudioMonitorThread()
+        self.mic_thread.mic_level_signal.connect(self.reactor.set_mic_level)
+        self.mic_thread.mic_level_signal.connect(self.right_panel.set_mic_level)
+        self.mic_thread.start()
+        
+        # Setup Log Polling
+        if self.log_queue:
+            self.log_timer = QTimer(self)
+            self.log_timer.timeout.connect(self.poll_logs)
+            self.log_timer.start(100)
+
+    def submit_command(self):
+        text = self.input_bar.text().strip()
+        if text and self.command_queue:
+            self.terminal.append(f"<span style='color: white;'>[USER]</span> {text}")
+            self.command_queue.put(text)
+            self.input_bar.clear()
+
+    def poll_logs(self):
+        if not self.log_queue: return
+        while True:
+            try:
+                log_msg = self.log_queue.get_nowait()
+                self.terminal.append(log_msg)
+                
+                # Auto-scroll to bottom
+                scrollbar = self.terminal.verticalScrollBar()
+                scrollbar.setValue(scrollbar.maximum())
+            except Empty:
+                break
 
     def mousePressEvent(self, event):
-        # Toggle Pause
+        # Allow toggling pause by clicking anywhere near the reactor
         self.toggle_pause()
         
     def toggle_pause(self):
@@ -250,18 +394,26 @@ class JarvisGUI(QMainWindow):
         
         if self.is_paused:
             self.pause_event.set()
-            print("GUI: PAUSED")
+            self.terminal.append("<span style='color: #FFA500;'>[SYS] Voice Recognition PAUSED. Text mode active.</span>")
         else:
             self.pause_event.clear()
-            print("GUI: RESUMED")
+            self.terminal.append("<span style='color: #00FFFF;'>[SYS] Voice Recognition RESUMED.</span>")
 
     def keyPressEvent(self, event):
-        # Allow exiting with ESC
         if event.key() == Qt.Key.Key_Escape:
             self.close()
 
-def run_gui(pause_event):
+    def closeEvent(self, event):
+        self.mic_thread.running = False
+        self.mic_thread.wait()
+        super().closeEvent(event)
+
+def run_gui(context):
     app = QApplication(sys.argv)
-    window = JarvisGUI(pause_event)
+    pause_event = context.get("pause_event")
+    command_queue = context.get("command_queue")
+    log_queue = context.get("log_queue")
+    
+    window = JarvisGUI(pause_event, command_queue, log_queue)
     window.show()
     sys.exit(app.exec())
