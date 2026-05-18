@@ -61,3 +61,4 @@
 [2026-05-18T14:30:00Z] Commit 61: feat: build parent QMainWindow frame overlay in gui/app.py
 [2026-05-18T14:36:00Z] Commit 62: feat: configure transparent background and frameless window flags
 [2026-05-18T14:42:00Z] Commit 63: feat: build animated rotating rings in CentralReactor core widget
+[2026-05-18T14:48:00Z] Commit 64: feat: design central core pulsing cycle based on math.sin
