@@ -9,3 +9,4 @@
 [2026-05-18T09:18:00Z] Commit 9: feat: define base Skill abstraction framework in core/skill.py
 [2026-05-18T09:24:00Z] Commit 10: feat: implement centralized registry loader inside core/registry.py
 [2026-05-18T09:30:00Z] Commit 11: feat: configure core voice synthesis client utilizing pyttsx3
+[2026-05-18T09:36:00Z] Commit 12: refactor: adjust gender-specific speech voices in voice properties
