@@ -13,3 +13,4 @@
 [2026-05-18T09:42:00Z] Commit 13: feat: add macOS-native system 'say' shell synthesis fallback
 [2026-05-18T09:48:00Z] Commit 14: feat: design continuous microphone voice listener in core/voice.py
 [2026-05-18T09:54:00Z] Commit 15: fix: intercept audio listen timeouts and return silent defaults
+[2026-05-18T10:00:00Z] Commit 16: feat: initialize primary JarvisEngine assistant wrapper
