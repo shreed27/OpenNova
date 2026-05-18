@@ -3,6 +3,8 @@ import sys
 import argparse
 import threading 
 import time
+import queue
+from queue import Empty
 from dotenv import load_dotenv
 from core.voice import speak, listen
 from core.registry import SkillRegistry
@@ -12,46 +14,64 @@ from gui.app import run_gui as run_gui_app
 # Load Env
 load_dotenv()
 
-if not os.environ.get("GROQ_API_KEY"):
-    print("Error: GROQ_API_KEY not found.")
-    sys.exit(1)
-
-def jarvis_loop(pause_event, registry, args):
+def jarvis_loop(context, registry, args):
     """
     Main loop for JARVIS, running in a separate thread.
-    Checks pause_event to determine if it should listen/process.
+    Checks command_queue for typed commands, or listens for voice.
     """
+    pause_event = context.get("pause_event")
+    command_queue = context.get("command_queue")
+    log_queue = context.get("log_queue")
+    
+    def log(msg):
+        print(msg)
+        if log_queue:
+            log_queue.put(msg)
+
     # Initialize Engine
     jarvis = JarvisEngine(registry)
 
     if args.text:
-        print("JARVIS: Jarvis Online. Ready for command (Text Mode).")
+        log("<span style='color: #00FFFF;'>[SYS] JARVIS Online. Ready for command (Text Mode).</span>")
     else:
+        log("<span style='color: #00FFFF;'>[SYS] JARVIS Online. Ready for voice command.</span>")
         speak("Jarvis Online. Ready for command.")
 
     while True:
-        # Check for pause
-        if pause_event.is_set():
-            time.sleep(0.5)
-            continue
-
-        if args.text:
-            try:
-                user_query = input("YOU: ").lower()
-            except EOFError:
-                break
-        else:
-            user_query = listen()
+        user_query = None
+        
+        # 1. Check for Typed Commands (Highest Priority)
+        try:
+            if command_queue:
+                user_query = command_queue.get_nowait()
+        except Empty:
+            pass
             
-        # Double check pause after listening (in case paused during listen)
-        if pause_event.is_set():
-            continue
+        # 2. If no typed command, try voice/cli (if not paused)
+        if not user_query:
+            if pause_event and pause_event.is_set():
+                time.sleep(0.5)
+                continue
+                
+            if args.text:
+                try:
+                    # In text mode without GUI, input() blocks. 
+                    # If using GUI, args.text usually isn't used for CLI input anymore.
+                    time.sleep(0.5) 
+                    continue
+                except EOFError:
+                    break
+            else:
+                user_query = listen()
+                
+            # Double check pause after listening
+            if pause_event and pause_event.is_set():
+                continue
 
         if user_query == "none" or not user_query: continue
+        
         if "quit" in user_query: 
-            print("Shutting down JARVIS loop...")
-            # We can't easily kill the main thread (GUI) from here, 
-            # but we can stop this loop. The user will have to close the GUI.
+            log("<span style='color: #FF3333;'>[SYS] Shutting down JARVIS loop...</span>")
             speak("Shutting down.")
             break
         
@@ -64,29 +84,28 @@ def jarvis_loop(pause_event, registry, args):
         is_direct = any(cmd in user_query for cmd in direct_commands)
         
         if "jarvis" not in user_query and not is_direct:
-            print(f"Ignored: {user_query}")
+            log(f"<span style='color: #555;'>Ignored background chatter: {user_query}</span>")
             continue
             
         clean_query = user_query.replace("jarvis", "").strip()
         
         try:
-            print(f"Thinking: {clean_query}")
+            log(f"<span style='color: #FFA500;'>[JARVIS] Processing: {clean_query}...</span>")
             response = jarvis.run_conversation(clean_query)
             
-            # Check pause before speaking response
-            if pause_event.is_set():
+            if pause_event and pause_event.is_set() and not args.text:
+                log("<span style='color: #555;'>[SYS] Skipped speech due to pause.</span>")
+                # Still log the response text to the HUD
+                log(f"<span style='color: #00FFCC;'>[JARVIS]</span> {response}")
                 continue
 
             if response:
-                if args.text:
-                    print(f"JARVIS: {response}")
-                else:
+                log(f"<span style='color: #00FFCC;'>[JARVIS]</span> {response}")
+                if not args.text:
                     speak(response)
         except Exception as e:
-            print(f"Main Loop Error: {e}")
-            if args.text:
-                print("JARVIS: System error.")
-            else:
+            log(f"<span style='color: #FF3333;'>[ERROR] Main Loop Error: {e}</span>")
+            if not args.text:
                 speak("System error.")
 
 def main():
@@ -94,10 +113,16 @@ def main():
     parser.add_argument("--text", action="store_true", help="Run in text mode (no voice I/O)")
     args = parser.parse_args()
 
-    # 1. Setup Pause Event
-    # Event is SET when PAUSED, CLEARED when RUNNING
+    # 1. Setup Thread Context
     pause_event = threading.Event()
-    context = {"pause_event": pause_event}
+    command_queue = queue.Queue()
+    log_queue = queue.Queue()
+    
+    context = {
+        "pause_event": pause_event,
+        "command_queue": command_queue,
+        "log_queue": log_queue
+    }
 
     # 2. Initialize Registry and Load Skills
     registry = SkillRegistry()
@@ -105,13 +130,11 @@ def main():
     registry.load_skills(skills_dir, context=context)
     
     # 3. Start JARVIS Loop in Background Thread
-    # Daemon thread so it dies when GUI closes
-    t = threading.Thread(target=jarvis_loop, args=(pause_event, registry, args), daemon=True)
+    t = threading.Thread(target=jarvis_loop, args=(context, registry, args), daemon=True)
     t.start()
     
     # 4. Start GUI in Main Thread (Required for PyQt)
-    # This will block until the window is closed
-    run_gui_app(pause_event)
+    run_gui_app(context)
 
 if __name__ == "__main__":
     main()
