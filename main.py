@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 from core.voice import speak, listen
 from core.registry import SkillRegistry
 from core.engine import JarvisEngine
-from gui.app import run_gui as run_gui_app
 
 # Load Env
 load_dotenv()
@@ -215,6 +214,12 @@ def run_app(args):
     t.start()
     
     # 4. Start GUI in Main Thread (Required for PyQt)
+    run_gui(context)
+
+
+def run_gui(context):
+    from gui.app import run_gui as run_gui_app
+
     run_gui_app(context)
 
 if __name__ == "__main__":

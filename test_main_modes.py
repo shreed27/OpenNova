@@ -27,12 +27,12 @@ class MainModeTests(unittest.TestCase):
 
         with patch.object(main, "SkillRegistry", return_value=registry), \
             patch.object(main.threading, "Thread", return_value=thread), \
-            patch.object(main, "run_gui_app") as run_gui_app:
+            patch.object(main, "run_gui") as run_gui:
             main.run_app(argparse.Namespace(text=False))
 
         registry.load_skills.assert_called_once()
         thread.start.assert_called_once()
-        run_gui_app.assert_called_once()
+        run_gui.assert_called_once()
 
     def test_text_mode_runs_without_gui(self):
         registry = Mock()
@@ -40,14 +40,14 @@ class MainModeTests(unittest.TestCase):
 
         with patch.object(main, "SkillRegistry", return_value=registry), \
             patch.object(main.threading, "Thread", return_value=thread), \
-            patch.object(main, "run_gui_app") as run_gui_app, \
+            patch.object(main, "run_gui") as run_gui, \
             patch.object(main, "run_text_loop") as run_text_loop:
             main.run_app(argparse.Namespace(text=True))
 
         registry.load_skills.assert_called_once()
         thread.start.assert_called_once()
         thread.join.assert_called_once_with(timeout=2)
-        run_gui_app.assert_not_called()
+        run_gui.assert_not_called()
         run_text_loop.assert_called_once()
 
     def test_text_loop_queues_commands_until_quit(self):
