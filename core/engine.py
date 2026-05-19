@@ -1,4 +1,3 @@
-import os
 import json
 import re
 from typing import Any
@@ -19,6 +18,9 @@ class JarvisEngine:
             "Just use the standard tool calling format provided by the API."
         )
 
+    def _generate_response(self, messages, tools_schema=None):
+        return self.brain.generate_response(messages, tools_schema or None)
+
     def run_conversation(self, user_prompt: str) -> str:
         messages = [
             {"role": "system", "content": self.system_instruction},
@@ -27,7 +29,7 @@ class JarvisEngine:
 
         try:
             tools_schema = self.registry.get_tools_schema()
-            response = self.brain.generate_response(messages, tools_schema or None)
+            response = self._generate_response(messages, tools_schema)
         except Exception as e:
             # Handle tool_use_failed error from Groq
             error_str = str(e)
@@ -111,7 +113,7 @@ class JarvisEngine:
                 )
 
             # Get final spoken response after tool runs
-            second_response = self.brain.generate_response(messages, tools_schema or None)
+            second_response = self._generate_response(messages, tools_schema)
             return second_response.choices[0].message.content
 
         # CASE 2: AI wants to chat
