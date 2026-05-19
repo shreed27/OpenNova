@@ -40,6 +40,8 @@ class SkillRegistryTests(unittest.TestCase):
             registry.load_skills(tmpdir)
 
             self.assertIn("working", registry.skills)
+            self.assertIn("broken", registry.skipped_modules)
+            self.assertIn("missing optional dependency", registry.skipped_modules["broken"])
 
 
 if __name__ == "__main__":

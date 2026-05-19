@@ -9,6 +9,7 @@ class SkillRegistry:
         self.skills: Dict[str, Skill] = {}
         self.tools_schema: List[Dict[str, Any]] = []
         self.functions: Dict[str, Callable] = {}
+        self.skipped_modules: Dict[str, str] = {}
 
     def load_skills(self, skills_dir: str, context: Dict[str, Any] = None):
         """Dynamically load skills from the specified directory."""
@@ -29,6 +30,7 @@ class SkillRegistry:
             try:
                 spec.loader.exec_module(module)
             except Exception as e:
+                self.skipped_modules[module_name] = str(e)
                 print(f"Skipped skill module {module_name}: {e}")
                 return
             
@@ -41,6 +43,7 @@ class SkillRegistry:
                         self.register_skill(skill_instance)
                         print(f"Loaded skill: {skill_instance.name}")
                     except Exception as e:
+                        self.skipped_modules[name] = str(e)
                         print(f"Failed to load skill {name}: {e}")
 
     def register_skill(self, skill: Skill):
