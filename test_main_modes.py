@@ -67,6 +67,19 @@ class MainModeTests(unittest.TestCase):
             "send WhatsApp to Shree",
         )
 
+    def test_load_registry_logs_skipped_skills(self):
+        registry = Mock()
+        registry.skipped_modules = {"broken_skill": "missing optional package"}
+        context = {"log_queue": queue.Queue()}
+
+        with patch.object(main, "SkillRegistry", return_value=registry):
+            result = main.load_registry(context)
+
+        self.assertIs(result, registry)
+        log_line = context["log_queue"].get_nowait()
+        self.assertIn("broken_skill", log_line)
+        self.assertIn("missing optional package", log_line)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -179,6 +179,15 @@ def load_registry(context):
     registry = SkillRegistry()
     skills_dir = os.path.join(os.path.dirname(__file__), "skills")
     registry.load_skills(skills_dir, context=context)
+    log_queue = context.get("log_queue")
+    if log_queue:
+        skipped_modules = getattr(registry, "skipped_modules", {})
+        if not isinstance(skipped_modules, dict):
+            skipped_modules = {}
+        for module_name, error in skipped_modules.items():
+            log_queue.put(
+                f"<span style='color: #FFA500;'>[SKILL]</span> Skipped {module_name}: {error}"
+            )
     return registry
 
 
