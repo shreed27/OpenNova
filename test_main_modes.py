@@ -53,13 +53,13 @@ class MainModeTests(unittest.TestCase):
     def test_text_loop_queues_commands_until_quit(self):
         command_queue = queue.Queue()
 
-        with patch("builtins.input", side_effect=["hello", "quit"]):
+        with patch("builtins.input", side_effect=["hello", "QUIT"]):
             main.run_text_loop({"command_queue": command_queue})
 
         first = command_queue.get_nowait()
         second = command_queue.get_nowait()
         self.assertEqual(first, "hello")
-        self.assertEqual(second, "quit")
+        self.assertEqual(second, "QUIT")
 
 
 if __name__ == "__main__":

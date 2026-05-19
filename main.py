@@ -102,9 +102,12 @@ def jarvis_loop(context, registry, args):
             if pause_event and pause_event.is_set():
                 continue
 
-        if user_query == "none" or not user_query: continue
+        if user_query == "none" or not user_query:
+            continue
+
+        normalized_query = user_query.lower()
         
-        if "quit" in user_query: 
+        if "quit" in normalized_query:
             log("<span style='color: #FF3333;'>[SYS] Shutting down JARVIS loop...</span>")
             speak("Shutting down.")
             break
@@ -115,13 +118,13 @@ def jarvis_loop(context, registry, args):
             "who", "what", "when", "where", "how", "why", "thank", "hello"
         ]
         
-        is_direct = any(cmd in user_query for cmd in direct_commands)
+        is_direct = any(cmd in normalized_query for cmd in direct_commands)
         
-        if "jarvis" not in user_query and not is_direct:
+        if "jarvis" not in normalized_query and not is_direct:
             log(f"<span style='color: #555;'>Ignored background chatter: {user_query}</span>")
             continue
             
-        clean_query = user_query.replace("jarvis", "").strip()
+        clean_query = normalized_query.replace("jarvis", "").strip()
         
         try:
             log(f"<span style='color: #FFA500;'>[JARVIS] Processing: {clean_query}...</span>")
