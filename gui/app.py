@@ -440,8 +440,15 @@ class JarvisGUI(QMainWindow):
                 break
 
     def mousePressEvent(self, event):
-        # Allow toggling pause by clicking anywhere near the reactor
-        self.toggle_pause()
+        if self._clicked_reactor(event):
+            self.toggle_pause()
+
+    def _clicked_reactor(self, event):
+        if hasattr(event, "position"):
+            point = event.position().toPoint()
+        else:
+            point = event.pos()
+        return self.childAt(point) is self.reactor
         
     def toggle_pause(self):
         self.is_paused = not self.is_paused
