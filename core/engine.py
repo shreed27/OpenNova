@@ -1,15 +1,15 @@
 import os
 import json
 import re
-from groq import Groq
+from typing import Any
+from core.brain import BrainManager
 from core.registry import SkillRegistry
 
 
 class JarvisEngine:
-    def __init__(self, registry: SkillRegistry):
+    def __init__(self, registry: SkillRegistry, brain: Any = None):
         self.registry = registry
-        self.client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
-        self.model_name = "llama-3.3-70b-versatile"
+        self.brain = brain or BrainManager()
 
         self.system_instruction = (
             "You are Jarvis, a helpful and precise AI assistant. "
@@ -27,21 +27,7 @@ class JarvisEngine:
 
         try:
             tools_schema = self.registry.get_tools_schema()
-            # If no tools are loaded, don't pass tools argument (or pass empty? Groq might handle it)
-            # Better to pass None if empty to avoid api error if specific models dislike empty tool lists?
-            # Actually, let's pass it if it exists.
-
-            completion_kwargs = {
-                "model": self.model_name,
-                "messages": messages,
-                "max_tokens": 200,
-            }
-
-            if tools_schema:
-                completion_kwargs["tools"] = tools_schema
-                completion_kwargs["tool_choice"] = "auto"
-
-            response = self.client.chat.completions.create(**completion_kwargs)
+            response = self.brain.generate_response(messages, tools_schema or None)
         except Exception as e:
             # Handle tool_use_failed error from Groq
             error_str = str(e)
@@ -125,11 +111,7 @@ class JarvisEngine:
                 )
 
             # Get final spoken response after tool runs
-            # Remove tools arg for second call or keep it? Usually keep it in case it needs to chain.
-            # But for simplicity let's just complete.
-            second_response = self.client.chat.completions.create(
-                model=self.model_name, messages=messages
-            )
+            second_response = self.brain.generate_response(messages, tools_schema or None)
             return second_response.choices[0].message.content
 
         # CASE 2: AI wants to chat

@@ -149,7 +149,10 @@ def main():
     parser = argparse.ArgumentParser(description="JARVIS AI Assistant")
     parser.add_argument("--text", action="store_true", help="Run in text mode (no voice I/O)")
     args = parser.parse_args()
+    run_app(args)
 
+
+def build_context():
     # 1. Setup Thread Context
     pause_event = threading.Event()
     command_queue = queue.Queue()
@@ -160,11 +163,42 @@ def main():
         "command_queue": command_queue,
         "log_queue": log_queue
     }
+    return context
 
+
+def load_registry(context):
     # 2. Initialize Registry and Load Skills
     registry = SkillRegistry()
     skills_dir = os.path.join(os.path.dirname(__file__), "skills")
     registry.load_skills(skills_dir, context=context)
+    return registry
+
+
+def run_text_loop(context):
+    command_queue = context.get("command_queue")
+
+    while True:
+        try:
+            text = input("JARVIS> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            text = "quit"
+
+        if command_queue:
+            command_queue.put(text)
+
+        if text.lower() == "quit":
+            break
+
+
+def run_app(args):
+    context = build_context()
+    registry = load_registry(context)
+
+    if args.text:
+        t = threading.Thread(target=jarvis_loop, args=(context, registry, args), daemon=True)
+        t.start()
+        run_text_loop(context)
+        return
     
     # 3. Start JARVIS Loop in Background Thread
     t = threading.Thread(target=jarvis_loop, args=(context, registry, args), daemon=True)
