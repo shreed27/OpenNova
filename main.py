@@ -198,6 +198,7 @@ def run_app(args):
         t = threading.Thread(target=jarvis_loop, args=(context, registry, args), daemon=True)
         t.start()
         run_text_loop(context)
+        t.join(timeout=2)
         return
     
     # 3. Start JARVIS Loop in Background Thread

@@ -46,6 +46,7 @@ class MainModeTests(unittest.TestCase):
 
         registry.load_skills.assert_called_once()
         thread.start.assert_called_once()
+        thread.join.assert_called_once_with(timeout=2)
         run_gui_app.assert_not_called()
         run_text_loop.assert_called_once()
 
