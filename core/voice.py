@@ -1,13 +1,22 @@
 import os
 import sys
-import pyttsx3
-import speech_recognition as sr
+try:
+    import pyttsx3
+except ImportError:
+    pyttsx3 = None
+
+try:
+    import speech_recognition as sr
+except ImportError:
+    sr = None
 
 # Initialize engine globally to avoid re-initialization issues
-engine = pyttsx3.init()
+engine = pyttsx3.init() if pyttsx3 else None
 
 # Set voice to deep male voice
 def set_deep_male_voice():
+    if not engine:
+        return
     voices = engine.getProperty('voices')
     for voice in voices:
         # Prefer "Daniel" for deep male voice on Mac
@@ -51,6 +60,10 @@ def speak(text):
                 # Fall through to pyttsx3 if 'say' fails (unlikely)
     
         # Try pyttsx3
+        if not engine:
+            print("TTS is unavailable. Install pyttsx3 or use macOS say.")
+            return
+
         try:
             engine.say(text)
             engine.runAndWait()
@@ -65,6 +78,10 @@ def listen():
     global is_speaking
     # if system is speaking, don't listen
     if is_speaking:
+        return "none"
+
+    if not sr:
+        print("Speech recognition is unavailable. Install SpeechRecognition and PyAudio for voice input.")
         return "none"
 
     r = sr.Recognizer()
