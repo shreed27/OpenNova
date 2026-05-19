@@ -4,6 +4,7 @@ import argparse
 import threading 
 import time
 import queue
+import re
 from queue import Empty
 from typing import Any, Dict, Optional, Tuple
 from dotenv import load_dotenv
@@ -45,6 +46,11 @@ def _send_telegram_response(registry: SkillRegistry, metadata: Optional[Dict[str
         )
     except Exception as exc:
         print(f"Failed to send Telegram response: {exc}")
+
+
+def _strip_wake_word(command: str) -> str:
+    return re.sub(r"\bjarvis\b", "", command, flags=re.IGNORECASE).strip()
+
 
 def jarvis_loop(context, registry, args):
     """
@@ -124,7 +130,7 @@ def jarvis_loop(context, registry, args):
             log(f"<span style='color: #555;'>Ignored background chatter: {user_query}</span>")
             continue
             
-        clean_query = normalized_query.replace("jarvis", "").strip()
+        clean_query = _strip_wake_word(user_query)
         
         try:
             log(f"<span style='color: #FFA500;'>[JARVIS] Processing: {clean_query}...</span>")

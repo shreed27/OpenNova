@@ -61,6 +61,12 @@ class MainModeTests(unittest.TestCase):
         self.assertEqual(first, "hello")
         self.assertEqual(second, "QUIT")
 
+    def test_strip_wake_word_preserves_command_casing(self):
+        self.assertEqual(
+            main._strip_wake_word("JARVIS send WhatsApp to Shree"),
+            "send WhatsApp to Shree",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
