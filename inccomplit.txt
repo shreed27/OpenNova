@@ -1,37 +1,28 @@
-# Incomplete Tasks and Configuration Guide
+# Current Follow-Up Notes
 
-This file lists all incomplete tasks and missing configurations detected in the JARVIS codebase.
+This project now has the main runtime gaps addressed:
 
-## 1. Missing API Keys and Environment Variables
-Scan results indicate the following environment variables are required in your `.env` file:
+- Brain routing goes through `JARVIS_BRAIN` via `BrainManager`.
+- GUI mode and text mode have separate startup paths.
+- Skill import failures are recorded and surfaced at startup.
+- The manual WhatsApp browser smoke test no longer blocks normal pytest collection.
 
-- [ ] **GROQ_API_KEY**: Required for `core/engine.py`. (Primary Brain)
-- [ ] **OPENWEATHERMAP_API_KEY**: Required for `skills/weather_ops.py`.
-- [ ] **DEFAULT_CITY**: Required for `skills/weather_ops.py` (Default: Mumbai).
-- [ ] **EMAIL_ADDRESS**: Required for `skills/email_ops.py`.
-- [ ] **EMAIL_PASSWORD**: Required for `skills/email_ops.py` (App Password recommended).
-- [ ] **EMAIL_IMAP_SERVER**: Required for `skills/email_ops.py` (e.g., `imap.gmail.com`).
+## Configuration Still Needed Locally
 
-**How to Add:**
-1. Open `.env` file: `/Users/ishitchaudhari/Desktop/JARVIC/.env`
-2. Add the keys in the format shown in `remaining.txt`.
+Add real values to `.env` as needed:
 
-## 2. Incomplete Features / TODOs
-- [ ] **Speaking Capability**: enhanced with macOS fallback (Completed).
-- [ ] **Email Skill**: Configuration required.
-- [ ] **Weather Skill**: Configuration required.
+- `GROQ_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY` for cloud brains.
+- `OLLAMA_MODEL` plus a running Ollama server for local mode.
+- `OPENWEATHERMAP_API_KEY` and `DEFAULT_CITY` for weather.
+- `EMAIL_ADDRESS`, `EMAIL_PASSWORD`, and `EMAIL_IMAP_SERVER` for email.
+- `TELEGRAM_BOT_TOKEN` for Telegram remote control.
 
-## 3. Python Dependencies
-Ensure all dependencies are installed.
-Run:
-```bash
-pip3 install requests
-```
-(Other dependencies like `pyttsx3`, `SpeechRecognition`, `groq` should already be installed).
+## Manual Checks
 
-## 4. Run Check
-Run the following command to start JARVIS:
-```bash
-python3 main.py
-```
-If you see "JARVIS: Jarvis Online", everything is working.
+- GUI HUD: `python3 main.py`
+- Text mode: `python3 main.py --text`
+- Tests: `python3 -m pytest -q`
+- Compile check:
+  `PYTHONPYCACHEPREFIX=/private/tmp/project_jarvis_pycache python3 -m compileall -q core gui skills main.py gemini_client.py`
+
+Hardware/API-dependent features such as microphone input, camera capture, Gemini Live, WhatsApp QR login, and YOLO detection still require local permissions, credentials, and installed optional dependencies.
