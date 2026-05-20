@@ -1,7 +1,11 @@
 import os
 import json
 import requests
+import logging
 from typing import List, Dict, Any
+
+logger = logging.getLogger("jarvis.brain")
+REQUEST_TIMEOUT_SECONDS = 30
 
 # Mock classes to mimic OpenAI/Groq response structure for core/engine.py
 class MockToolCallFunction:
@@ -32,20 +36,35 @@ class MockResponse:
 class BrainManager:
     def __init__(self):
         self.brain_type = os.environ.get("JARVIS_BRAIN", "groq").lower().strip()
-        print(f"[BrainManager] Initializing brain type: {self.brain_type}")
+        logger.info("Initializing brain type: %s", self.brain_type)
         
         # Validate keys/configurations
         if self.brain_type == "groq" and not os.environ.get("GROQ_API_KEY"):
-            print("Warning: GROQ_API_KEY missing. Defaulting to Ollama local.")
+            logger.warning("GROQ_API_KEY missing. Defaulting to Ollama local.")
             self.brain_type = "ollama"
             
         if self.brain_type == "openai" and not os.environ.get("OPENAI_API_KEY"):
-            print("Warning: OPENAI_API_KEY missing. Defaulting to Ollama local.")
+            logger.warning("OPENAI_API_KEY missing. Defaulting to Ollama local.")
             self.brain_type = "ollama"
             
         if self.brain_type == "gemini" and not os.environ.get("GEMINI_API_KEY"):
-            print("Warning: GEMINI_API_KEY missing. Defaulting to Ollama local.")
+            logger.warning("GEMINI_API_KEY missing. Defaulting to Ollama local.")
             self.brain_type = "ollama"
+
+    @staticmethod
+    def response_from_openai_payload(res_data: Dict[str, Any]) -> MockResponse:
+        choice = res_data["choices"][0]
+        msg = choice["message"]
+        content = msg.get("content") or ""
+
+        tool_calls = None
+        if "tool_calls" in msg and msg["tool_calls"]:
+            tool_calls = []
+            for tc in msg["tool_calls"]:
+                func = MockToolCallFunction(tc["function"]["name"], tc["function"]["arguments"])
+                tool_calls.append(MockToolCall(tc["id"], tc["type"], func))
+
+        return MockResponse(content, tool_calls)
 
     def generate_response(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]] = None) -> Any:
         """
@@ -96,22 +115,14 @@ class BrainManager:
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
             
-        r = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+        r = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
         r.raise_for_status()
-        res_data = r.json()
-        
-        choice = res_data["choices"][0]
-        msg = choice["message"]
-        content = msg.get("content") or ""
-        
-        tool_calls = None
-        if "tool_calls" in msg:
-            tool_calls = []
-            for tc in msg["tool_calls"]:
-                func = MockToolCallFunction(tc["function"]["name"], tc["function"]["arguments"])
-                tool_calls.append(MockToolCall(tc["id"], tc["type"], func))
-                
-        return MockResponse(content, tool_calls)
+        return self.response_from_openai_payload(r.json())
 
     def _call_gemini(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Any:
         """
@@ -195,7 +206,7 @@ class BrainManager:
             return MockResponse(content, tool_calls)
             
         except Exception as e:
-            print(f"[BrainManager] Gemini SDK Call failed: {e}. Falling back to REST API.")
+            logger.warning("Gemini SDK call failed; falling back to REST API: %s", e)
             return self._call_gemini_rest(messages, tools)
 
     def _call_gemini_rest(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Any:
@@ -215,22 +226,9 @@ class BrainManager:
             payload["tool_choice"] = "auto"
             
         url = f"https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key={api_key}"
-        r = requests.post(url, headers=headers, json=payload)
+        r = requests.post(url, headers=headers, json=payload, timeout=REQUEST_TIMEOUT_SECONDS)
         r.raise_for_status()
-        res_data = r.json()
-        
-        choice = res_data["choices"][0]
-        msg = choice["message"]
-        content = msg.get("content") or ""
-        
-        tool_calls = None
-        if "tool_calls" in msg:
-            tool_calls = []
-            for tc in msg["tool_calls"]:
-                func = MockToolCallFunction(tc["function"]["name"], tc["function"]["arguments"])
-                tool_calls.append(MockToolCall(tc["id"], tc["type"], func))
-                
-        return MockResponse(content, tool_calls)
+        return self.response_from_openai_payload(r.json())
 
     def _call_ollama(self, messages: List[Dict[str, str]], tools: List[Dict[str, Any]]) -> Any:
         url = "http://localhost:11434/api/chat"
@@ -262,5 +260,5 @@ class BrainManager:
                     
             return MockResponse(content, tool_calls)
         except Exception as e:
-            print(f"[BrainManager] Ollama connection failed: {e}")
+            logger.warning("Ollama connection failed: %s", e)
             return MockResponse("Error: Could not connect to local Ollama. Please make sure Ollama is running.", None)

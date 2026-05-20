@@ -1,9 +1,11 @@
 import json
 import re
+import logging
 from typing import Any
 from core.brain import BrainManager
 from core.registry import SkillRegistry
 
+logger = logging.getLogger("jarvis.engine")
 
 class JarvisEngine:
     def __init__(self, registry: SkillRegistry, brain: Any = None):
@@ -44,9 +46,7 @@ class JarvisEngine:
                     if match:
                         func_name = match.group(1)
                         func_args_str = match.group(2)
-                        print(
-                            f"DEBUG: Recovered failed tool call: {func_name} with {func_args_str}"
-                        )
+                        logger.debug("Recovered failed tool call: %s with %s", func_name, func_args_str)
 
                         # Manually construct a tool call-like object to trigger the execution loop
                         # But wait, the loop expects response.choices[0].message.tool_calls
@@ -65,9 +65,9 @@ class JarvisEngine:
                             except Exception as exec_e:
                                 return f"Error executing recovered tool: {exec_e}"
                 except Exception as parse_e:
-                    print(f"Failed to recover tool call: {parse_e}")
+                    logger.warning("Failed to recover tool call: %s", parse_e)
 
-            print(f"Groq API Error: {e}")
+            logger.error("Brain API error: %s", e)
             return "I am having trouble connecting to the brain, sir."
 
         response_message = response.choices[0].message
@@ -75,33 +75,31 @@ class JarvisEngine:
 
         # CASE 1: AI wants to use a tool (Action)
         if tool_calls:
-            print("DEBUG: Executing Tool...")
+            logger.debug("Executing tool call(s)")
             messages.append(response_message)
 
             for tool_call in tool_calls:
                 function_name = tool_call.function.name
-                print(f"DEBUG: AI attempting to call: {function_name}")
+                logger.debug("AI attempting to call: %s", function_name)
 
                 function_to_call = self.registry.get_function(function_name)
 
                 if not function_to_call:
                     res = "Error: Tool not found."
-                    print(f"DEBUG: Tool {function_name} not found in registry.")
+                    logger.warning("Tool %s not found in registry", function_name)
                 else:
                     try:
                         function_args = json.loads(tool_call.function.arguments)
-                        print(f"DEBUG: Tool arguments: {function_args}")
+                        logger.debug("Tool arguments: %s", function_args)
 
                         if function_args is None:
                             function_args = {}
 
                         res = function_to_call(**function_args)
-                        print(
-                            f"DEBUG: Tool Output: {str(res)[:100]}..."
-                        )  # Truncate for readability
+                        logger.debug("Tool output: %s", str(res)[:100])
                     except Exception as e:
                         res = f"Error executing tool: {e}"
-                        print(f"DEBUG: Tool Execution Error: {e}")
+                        logger.exception("Tool execution error")
 
                 messages.append(
                     {

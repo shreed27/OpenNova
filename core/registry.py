@@ -1,8 +1,11 @@
 import os
 import importlib.util
 import inspect
+import logging
 from typing import Dict, List, Any, Callable
 from .skill import Skill
+
+logger = logging.getLogger("jarvis.registry")
 
 class SkillRegistry:
     def __init__(self):
@@ -14,7 +17,7 @@ class SkillRegistry:
     def load_skills(self, skills_dir: str, context: Dict[str, Any] = None):
         """Dynamically load skills from the specified directory."""
         if not os.path.exists(skills_dir):
-            print(f"Skills directory not found: {skills_dir}")
+            logger.warning("Skills directory not found: %s", skills_dir)
             return
 
         for filename in os.listdir(skills_dir):
@@ -31,7 +34,7 @@ class SkillRegistry:
                 spec.loader.exec_module(module)
             except Exception as e:
                 self.skipped_modules[module_name] = str(e)
-                print(f"Skipped skill module {module_name}: {e}")
+                logger.warning("Skipped skill module %s: %s", module_name, e)
                 return
             
             for name, obj in inspect.getmembers(module):
@@ -41,10 +44,10 @@ class SkillRegistry:
                         if context:
                             skill_instance.initialize(context)
                         self.register_skill(skill_instance)
-                        print(f"Loaded skill: {skill_instance.name}")
+                        logger.info("Loaded skill: %s", skill_instance.name)
                     except Exception as e:
                         self.skipped_modules[name] = str(e)
-                        print(f"Failed to load skill {name}: {e}")
+                        logger.warning("Failed to load skill %s: %s", name, e)
 
     def register_skill(self, skill: Skill):
         self.skills[skill.name] = skill
