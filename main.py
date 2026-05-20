@@ -5,15 +5,19 @@ import threading
 import time
 import queue
 import re
+import json
 from queue import Empty
 from typing import Any, Dict, Optional, Tuple
 from dotenv import load_dotenv
+from core.doctor import run_doctor as build_doctor_report
 from core.voice import speak, listen
 from core.registry import SkillRegistry
 from core.engine import JarvisEngine
+from core.logging_config import configure_logging
 
 # Load Env
 load_dotenv()
+configure_logging()
 
 
 def _normalize_queued_command(command: Any) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
@@ -42,6 +46,7 @@ def _send_telegram_response(registry: SkillRegistry, metadata: Optional[Dict[str
             text=response,
             chat_id=str(metadata.get("chat_id", "")),
             reply_to_message_id=str(metadata.get("message_id", "")),
+            confirm=True,
         )
     except Exception as exc:
         print(f"Failed to send Telegram response: {exc}")
@@ -156,6 +161,7 @@ def jarvis_loop(context, registry, args):
 def main():
     parser = argparse.ArgumentParser(description="JARVIS AI Assistant")
     parser.add_argument("--text", action="store_true", help="Run in text mode (no voice I/O)")
+    parser.add_argument("--doctor", action="store_true", help="Run setup checks and exit")
     args = parser.parse_args()
     run_app(args)
 
@@ -208,6 +214,10 @@ def run_text_loop(context):
 
 
 def run_app(args):
+    if getattr(args, "doctor", False):
+        print(json.dumps(run_doctor(), indent=2))
+        return
+
     context = build_context()
     registry = load_registry(context)
 
@@ -230,6 +240,10 @@ def run_gui(context):
     from gui.app import run_gui as run_gui_app
 
     run_gui_app(context)
+
+
+def run_doctor():
+    return build_doctor_report()
 
 if __name__ == "__main__":
     main()

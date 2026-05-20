@@ -4,6 +4,7 @@ import sys
 
 from dotenv import load_dotenv
 
+from core.doctor import run_doctor
 from core.registry import SkillRegistry
 
 
@@ -16,18 +17,14 @@ def run(command):
 
 def show_config_status():
     load_dotenv()
-    keys = [
-        "JARVIS_BRAIN",
-        "GROQ_API_KEY",
-        "OPENAI_API_KEY",
-        "GEMINI_API_KEY",
-        "OPENWEATHERMAP_API_KEY",
-        "EMAIL_ADDRESS",
-        "TELEGRAM_BOT_TOKEN",
-    ]
-    for key in keys:
-        value = "set" if os.environ.get(key) else "missing"
+    report = run_doctor()
+    for key, value in report["env"].items():
         print(f"{key}: {value}", flush=True)
+    print(f"Ollama available: {report['ollama']['available']}", flush=True)
+    print("Optional install groups:", flush=True)
+    for group, status in report["optional_groups"].items():
+        missing = ", ".join(status["missing"]) if status["missing"] else "none"
+        print(f"- {group}: missing {missing}", flush=True)
 
 
 def show_skill_status():
@@ -38,7 +35,9 @@ def show_skill_status():
     if registry.skipped_modules:
         print("Skipped skills:", flush=True)
         for name, error in sorted(registry.skipped_modules.items()):
-            print(f"- {name}: {error}", flush=True)
+            report = run_doctor()
+            group = report["skill_optional_groups"].get(name, "unknown")
+            print(f"- {name}: {error} (install group: {group})", flush=True)
 
 
 if __name__ == "__main__":
