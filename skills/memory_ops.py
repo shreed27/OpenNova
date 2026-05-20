@@ -1,5 +1,6 @@
 import os
 import json
+import tempfile
 from typing import List, Dict, Any, Callable
 from core.skill import Skill
 
@@ -7,9 +8,23 @@ class MemorySkill(Skill):
     """Skill for persistent memory storage and retrieval."""
     
     def __init__(self):
-        # Store memory in user's home directory
-        self.memory_file = os.path.expanduser("~/.jarvic_memory.json")
-        self._ensure_memory_file()
+        self.memory_file = os.environ.get("JARVIS_MEMORY_FILE") or self._default_memory_file()
+        try:
+            self._ensure_memory_file()
+        except OSError:
+            self.memory_file = self._fallback_memory_file()
+            self._ensure_memory_file()
+
+    def _default_memory_file(self) -> str:
+        if os.name == "posix" and os.uname().sysname == "Darwin":
+            base_dir = os.path.expanduser("~/Library/Application Support/JARVIS")
+        else:
+            base_dir = os.path.expanduser("~/.local/share/jarvis")
+        return os.path.join(base_dir, "memory.json")
+
+    def _fallback_memory_file(self) -> str:
+        project_root = os.path.dirname(os.path.dirname(__file__))
+        return os.path.join(project_root, ".jarvis", "memory.json")
     
     @property
     def name(self) -> str:
@@ -17,22 +32,31 @@ class MemorySkill(Skill):
 
     def _ensure_memory_file(self):
         """Create memory file if it doesn't exist."""
+        os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
         if not os.path.exists(self.memory_file):
-            with open(self.memory_file, 'w') as f:
+            with open(self.memory_file, 'w', encoding="utf-8") as f:
                 json.dump({}, f)
 
     def _load_memory(self) -> dict:
         """Load memory from file."""
         try:
-            with open(self.memory_file, 'r') as f:
+            with open(self.memory_file, 'r', encoding="utf-8") as f:
                 return json.load(f)
-        except:
+        except (json.JSONDecodeError, OSError):
             return {}
 
     def _save_memory(self, memory: dict):
         """Save memory to file."""
-        with open(self.memory_file, 'w') as f:
-            json.dump(memory, f, indent=2)
+        directory = os.path.dirname(self.memory_file)
+        os.makedirs(directory, exist_ok=True)
+        fd, tmp_path = tempfile.mkstemp(prefix=".memory.", suffix=".tmp", dir=directory)
+        try:
+            with os.fdopen(fd, 'w', encoding="utf-8") as f:
+                json.dump(memory, f, indent=2)
+            os.replace(tmp_path, self.memory_file)
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
 
     def get_tools(self) -> List[Dict[str, Any]]:
         return [

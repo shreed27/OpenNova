@@ -9,6 +9,7 @@ whatsapp_profile/
 __pycache__/
 *.pyc
 .pytest_cache/
+.jarvis/
 .DS_Store
 venv/
 .python-version
