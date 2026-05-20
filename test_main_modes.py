@@ -80,6 +80,21 @@ class MainModeTests(unittest.TestCase):
         self.assertIn("broken_skill", log_line)
         self.assertIn("missing optional package", log_line)
 
+    def test_telegram_auto_response_is_confirmed(self):
+        send = Mock()
+        registry = Mock()
+        registry.get_function.return_value = send
+        metadata = {"source": "telegram", "chat_id": "123", "message_id": "456"}
+
+        main._send_telegram_response(registry, metadata, "done")
+
+        send.assert_called_once_with(
+            text="done",
+            chat_id="123",
+            reply_to_message_id="456",
+            confirm=True,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

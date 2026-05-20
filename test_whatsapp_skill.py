@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+import json
 from unittest.mock import Mock, patch
 
 fake_client_module = types.ModuleType("skills.whatsapp.whatsapp_client")
@@ -25,7 +26,7 @@ class WhatsappSkillTests(unittest.TestCase):
         client.send_message.return_value = "Message sent to chat 'Dad'"
         skill.client = client
 
-        result = skill.send_whatsapp_message("Dad", "Hello")
+        result = skill.send_whatsapp_message("Dad", "Hello", confirm=True)
 
         self.assertEqual(result, "Message sent to chat 'Dad'")
         client.send_message.assert_called_once_with(
@@ -41,7 +42,7 @@ class WhatsappSkillTests(unittest.TestCase):
         client.send_message.return_value = "Message sent to +15551234567"
         skill.client = client
 
-        result = skill.send_whatsapp_message("Dad", "Hello")
+        result = skill.send_whatsapp_message("Dad", "Hello", confirm=True)
 
         self.assertEqual(result, "Message sent to +15551234567")
         client.send_message.assert_called_once_with(
@@ -49,6 +50,13 @@ class WhatsappSkillTests(unittest.TestCase):
             message="Hello",
             phone_number="+15551234567",
         )
+
+    def test_send_message_requires_confirmation_by_default(self):
+        skill = WhatsappSkill()
+
+        result = json.loads(skill.send_whatsapp_message("Dad", "Hello"))
+
+        self.assertEqual(result["status"], "confirmation_required")
 
 
 if __name__ == "__main__":
