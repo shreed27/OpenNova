@@ -1,5 +1,5 @@
-import os
 import sys
+import subprocess
 try:
     import pyttsx3
 except ImportError:
@@ -51,9 +51,7 @@ def speak(text):
         # to avoid hangs/crashes unless we are strictly in a non-GUI text mode.
         if sys.platform == "darwin":
             try:
-                # Escape quotes to prevent shell injection/errors
-                clean_text = text.replace('"', '\\"').replace("'", "")
-                os.system(f'say "{clean_text}"')
+                subprocess.run(["say", text], check=False)
                 return
             except Exception as e2:
                 print(f"TTS Fallback Error: {e2}")
