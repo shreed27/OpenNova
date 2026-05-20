@@ -15,6 +15,10 @@ class TelegramGatewaySkill(Skill):
         self.running = False
         self.context = None
         self.last_chat_id = None
+
+    @property
+    def name(self):
+        return "telegram_gateway_skill"
         
     def initialize(self, context):
         self.context = context

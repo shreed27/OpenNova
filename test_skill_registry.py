@@ -4,6 +4,7 @@ import textwrap
 import unittest
 
 from core.registry import SkillRegistry
+from skills.telegram_ops import TelegramGatewaySkill
 
 
 class SkillRegistryTests(unittest.TestCase):
@@ -42,6 +43,9 @@ class SkillRegistryTests(unittest.TestCase):
             self.assertIn("working", registry.skills)
             self.assertIn("broken", registry.skipped_modules)
             self.assertIn("missing optional dependency", registry.skipped_modules["broken"])
+
+    def test_telegram_gateway_has_skill_name(self):
+        self.assertEqual(TelegramGatewaySkill().name, "telegram_gateway_skill")
 
 
 if __name__ == "__main__":
