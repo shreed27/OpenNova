@@ -1,0 +1,4 @@
+-r requirements-base.txt
+PyQt6>=6.6.0
+psutil>=5.9.0
+PyAudio>=0.2.11

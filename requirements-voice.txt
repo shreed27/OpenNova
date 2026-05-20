@@ -1,0 +1,4 @@
+-r requirements-base.txt
+pyttsx3>=2.90
+SpeechRecognition>=3.8.1
+PyAudio>=0.2.11

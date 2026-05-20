@@ -1,0 +1,4 @@
+-r requirements-base.txt
+google-genai>=1.16.1
+opencv-python
+PyAudio>=0.2.11

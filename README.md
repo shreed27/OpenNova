@@ -62,6 +62,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+For a lighter install, start with `requirements-base.txt` and add optional groups only when needed:
+`requirements-gui.txt`, `requirements-voice.txt`, `requirements-gemini-live.txt`, `requirements-whatsapp.txt`, or `requirements-detection.txt`.
+
 ### 2. Configure Neural Links
 Create `.env` in the root. Start from `.env.template` and supply the providers you want.
 ```ini
@@ -103,6 +106,17 @@ python3 main.py --text
 
 Text mode starts the assistant without importing the PyQt HUD. Type commands at `JARVIS>` and use `quit` to stop.
 
+**Run first-use diagnostics:**
+```bash
+python3 main.py --doctor
+```
+
+## 🔐 SAFE MODE
+Risky actions such as file writes, app launches, screenshots, volume changes, and external messages require explicit confirmation by default. Tool calls can pass `confirm=true`, or you can opt into trusted local mode:
+```ini
+JARVIS_TRUSTED_MODE=true
+```
+
 ## ✅ VERIFY
 ```bash
 python3 verify_changes.py
@@ -118,6 +132,14 @@ PYTHONPYCACHEPREFIX=/private/tmp/project_jarvis_pycache python3 -m compileall -q
 - **WhatsApp:** requires `selenium`, `webdriver-manager`, Chrome/Chromium, and a local browser profile login.
 - **Gemini Live:** requires `GEMINI_API_KEY` and the `google-genai` runtime.
 - **Object Detection:** requires `ultralytics`, `torch`, `torchvision`, and the local `yolov8n.pt` model.
+
+Detailed setup guides live in `docs/`:
+- `docs/ollama.md`
+- `docs/gemini-live.md`
+- `docs/whatsapp.md`
+- `docs/email.md`
+- `docs/detection.md`
+- `docs/macos-permissions.md`
 
 ## 🏗️ SYSTEM ARCHITECTURE
 ```text
