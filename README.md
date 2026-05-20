@@ -105,11 +105,12 @@ Text mode starts the assistant without importing the PyQt HUD. Type commands at 
 
 ## ✅ VERIFY
 ```bash
+python3 verify_changes.py
 python3 -m pytest -q
 PYTHONPYCACHEPREFIX=/private/tmp/project_jarvis_pycache python3 -m compileall -q core gui skills main.py gemini_client.py
 ```
 
-The WhatsApp browser login smoke test is marked as manual because it opens a browser and waits for QR login.
+`verify_changes.py` prints local config status, loads available skills, reports skipped optional skills, and runs pytest. The WhatsApp browser login smoke test is marked as manual because it opens a browser and waits for QR login.
 
 ## OPTIONAL CAPABILITY NOTES
 - **GUI HUD:** requires `PyQt6`, `psutil`, `PyAudio`, and microphone permissions.
