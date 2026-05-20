@@ -63,7 +63,7 @@ pip install -r requirements.txt
 ```
 
 ### 2. Configure Neural Links
-Create `.env` in the root. Supply what you want, ignore what you don't.
+Create `.env` in the root. Start from `.env.template` and supply the providers you want.
 ```ini
 # CORE PROTOCOL [groq | ollama | gemini | openai]
 JARVIS_BRAIN=groq
@@ -73,8 +73,17 @@ GROQ_API_KEY=gsk_your_key_here
 # GEMINI_API_KEY=AIza...
 # OPENAI_API_KEY=sk-...
 
-# OLLAMA OVERRIDE (For local runners)
+# OLLAMA OVERRIDE (for local runners)
 OLLAMA_MODEL=llama3
+
+# WEATHER (optional)
+# OPENWEATHERMAP_API_KEY=...
+# DEFAULT_CITY=Mumbai
+
+# EMAIL (optional)
+# EMAIL_ADDRESS=you@gmail.com
+# EMAIL_PASSWORD=gmail_app_password
+# EMAIL_IMAP_SERVER=imap.gmail.com
 
 # TELEGRAM C&C LINK (Optional)
 # TELEGRAM_BOT_TOKEN=your_bot_token
@@ -89,8 +98,25 @@ python main.py
 
 **Boot Stealth Mode (CLI Only):**
 ```bash
-python main.py --text
+python3 main.py --text
 ```
+
+Text mode starts the assistant without importing the PyQt HUD. Type commands at `JARVIS>` and use `quit` to stop.
+
+## ✅ VERIFY
+```bash
+python3 -m pytest -q
+PYTHONPYCACHEPREFIX=/private/tmp/project_jarvis_pycache python3 -m compileall -q core gui skills main.py gemini_client.py
+```
+
+The WhatsApp browser login smoke test is marked as manual because it opens a browser and waits for QR login.
+
+## OPTIONAL CAPABILITY NOTES
+- **GUI HUD:** requires `PyQt6`, `psutil`, `PyAudio`, and microphone permissions.
+- **Voice:** `SpeechRecognition` and `PyAudio` are needed for listening; macOS `say` is used as a robust speech fallback.
+- **WhatsApp:** requires `selenium`, `webdriver-manager`, Chrome/Chromium, and a local browser profile login.
+- **Gemini Live:** requires `GEMINI_API_KEY` and the `google-genai` runtime.
+- **Object Detection:** requires `ultralytics`, `torch`, `torchvision`, and the local `yolov8n.pt` model.
 
 ## 🏗️ SYSTEM ARCHITECTURE
 ```text
