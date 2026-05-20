@@ -1,6 +1,7 @@
 from core.skill import Skill
 import json
 import os
+from core.permissions import confirmation_required, confirmation_response
 from skills.whatsapp.whatsapp_client import WhatsAppClient
 
 class WhatsappSkill(Skill):
@@ -49,6 +50,10 @@ class WhatsappSkill(Skill):
                             "message": {
                                 "type": "string",
                                 "description": "The message to send."
+                            },
+                            "confirm": {
+                                "type": "boolean",
+                                "description": "Set true to confirm sending the message."
                             }
                         },
                         "required": ["name", "message"],
@@ -62,11 +67,14 @@ class WhatsappSkill(Skill):
             "send_whatsapp_message": self.send_whatsapp_message
         }
 
-    def send_whatsapp_message(self, name, message):
+    def send_whatsapp_message(self, name, message, confirm: bool = False):
         """
         Sends a WhatsApp message by existing chat name when possible,
         with optional phone-number fallback from contacts.json.
         """
+        if confirmation_required(confirm):
+            return json.dumps(confirmation_response("sending WhatsApp messages"))
+
         clean_name = name.lower().strip()
         phone_number = self.contacts.get(clean_name)
 

@@ -2,7 +2,11 @@ import os
 import requests
 import threading
 import time
+import logging
+from core.permissions import confirmation_required, confirmation_response
 from core.skill import Skill
+
+logger = logging.getLogger("jarvis.skills.telegram")
 
 class TelegramGatewaySkill(Skill):
     """
@@ -52,6 +56,7 @@ class TelegramGatewaySkill(Skill):
                             self._handle_command(chat_id, text, message_id=message_id)
             except Exception as e:
                 # If network drops, wait and retry
+                logger.warning("Telegram polling failed: %s", e)
                 time.sleep(5)
                 
     def _send_message(self, chat_id, text, reply_to_message_id=None):
@@ -59,7 +64,8 @@ class TelegramGatewaySkill(Skill):
         payload = {"chat_id": chat_id, "text": text}
         if reply_to_message_id:
             payload["reply_parameters"] = {"message_id": int(reply_to_message_id)}
-        requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=10)
+        response.raise_for_status()
 
     def _handle_command(self, chat_id, text, message_id=None):
         log_queue = self.context.get("log_queue")
@@ -102,15 +108,19 @@ class TelegramGatewaySkill(Skill):
                     "properties": {
                         "text": {"type": "string", "description": "The message text to send"},
                         "chat_id": {"type": "string", "description": "The Telegram chat ID (if known). If empty, broadcasts to the last known chat ID."},
-                        "reply_to_message_id": {"type": "string", "description": "Optional Telegram message ID to reply to for correlation."}
+                        "reply_to_message_id": {"type": "string", "description": "Optional Telegram message ID to reply to for correlation."},
+                        "confirm": {"type": "boolean", "description": "Set true to confirm sending the message."}
                     },
                     "required": ["text"]
                 }
             }
         }]
         
-    def send_telegram_message(self, text: str, chat_id: str = "", reply_to_message_id: str = "") -> str:
+    def send_telegram_message(self, text: str, chat_id: str = "", reply_to_message_id: str = "", confirm: bool = False) -> str:
         """Called by JARVIS Engine as a Tool"""
+        if confirmation_required(confirm):
+            return confirmation_response("sending Telegram messages")["message"]
+
         target_chat = chat_id if chat_id else self.last_chat_id
         if not target_chat:
             return "Error: No Telegram chat ID known to send message to."
@@ -118,8 +128,11 @@ class TelegramGatewaySkill(Skill):
         if not self.bot_token:
             return "Error: TELEGRAM_BOT_TOKEN is not configured."
             
-        self._send_message(target_chat, text, reply_to_message_id=reply_to_message_id or None)
-        return "Message sent successfully via Telegram."
+        try:
+            self._send_message(target_chat, text, reply_to_message_id=reply_to_message_id or None)
+            return "Message sent successfully via Telegram."
+        except Exception as exc:
+            return f"Error sending Telegram message: {exc}"
 
 def get_skill():
     return TelegramGatewaySkill()

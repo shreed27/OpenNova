@@ -72,6 +72,7 @@ class EmailSkill(Skill):
         Returns:
             JSON string with unread count
         """
+        mail = None
         try:
             mail = self._connect_imap()
             mail.select('inbox')
@@ -83,16 +84,12 @@ class EmailSkill(Skill):
                 unread_ids = messages[0].split()
                 unread_count = len(unread_ids)
                 
-                mail.close()
-                mail.logout()
-                
                 return json.dumps({
                     "status": "success",
                     "unread_count": unread_count,
                     "message": f"You have {unread_count} unread email(s)"
                 })
             else:
-                mail.logout()
                 return json.dumps({
                     "status": "error",
                     "message": "Failed to check emails"
@@ -108,6 +105,16 @@ class EmailSkill(Skill):
                 "status": "error",
                 "message": f"Email check error: {str(e)}"
             })
+        finally:
+            if mail:
+                try:
+                    mail.close()
+                except Exception:
+                    pass
+                try:
+                    mail.logout()
+                except Exception:
+                    pass
 
     def get_recent_emails(self, count: int = 5) -> str:
         """
@@ -119,6 +126,7 @@ class EmailSkill(Skill):
         Returns:
             JSON string with email list
         """
+        mail = None
         try:
             mail = self._connect_imap()
             mail.select('inbox')
@@ -127,7 +135,6 @@ class EmailSkill(Skill):
             status, messages = mail.search(None, 'ALL')
             
             if status != 'OK':
-                mail.logout()
                 return json.dumps({
                     "status": "error",
                     "message": "Failed to fetch emails"
@@ -164,9 +171,6 @@ class EmailSkill(Skill):
                         "subject": subject or "(No Subject)"
                     })
             
-            mail.close()
-            mail.logout()
-            
             return json.dumps({
                 "status": "success",
                 "count": len(emails),
@@ -183,3 +187,13 @@ class EmailSkill(Skill):
                 "status": "error",
                 "message": f"Error fetching emails: {str(e)}"
             })
+        finally:
+            if mail:
+                try:
+                    mail.close()
+                except Exception:
+                    pass
+                try:
+                    mail.logout()
+                except Exception:
+                    pass
