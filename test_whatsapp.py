@@ -1,7 +1,14 @@
-from skills.whatsapp.whatsapp_client import WhatsAppClient
 import time
 
-def test():
+import pytest
+
+selenium = pytest.importorskip("selenium", reason="WhatsApp browser smoke test requires selenium")
+
+from skills.whatsapp.whatsapp_client import WhatsAppClient
+
+
+@pytest.mark.skip(reason="Manual WhatsApp QR smoke test; run directly when needed")
+def test_manual_whatsapp_browser_login():
     print("Initializing WhatsApp Client...")
     client = WhatsAppClient()
     
@@ -13,4 +20,4 @@ def test():
     print("Test Complete. You can close the browser.")
 
 if __name__ == "__main__":
-    test()
+    test_manual_whatsapp_browser_login()
