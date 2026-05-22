@@ -1,22 +1,8 @@
-
 import os
 import sys
 import subprocess
 import threading
 from core.skill import Skill
-from dotenv import load_dotenv
-
-# Try importing the new SDK
-try:
-    from google import genai
-    HAS_GENAI = True
-except ImportError:
-    HAS_GENAI = False
-    print("Error: google-genai not installed.")
-
-# Audio Configuration
-# Managed by gemini_client.py
-pass
 
 class GeminiLiveSkill(Skill):
     """
@@ -63,6 +49,17 @@ class GeminiLiveSkill(Skill):
             
             if not os.path.exists(script_path):
                 return f"Error: Gemini client script not found at {script_path}"
+
+            preflight = subprocess.run(
+                [sys.executable, script_path, "--preflight"],
+                capture_output=True,
+                text=True,
+            )
+            if preflight.returncode != 0:
+                startup_message = (preflight.stdout or preflight.stderr).strip()
+                if not startup_message:
+                    startup_message = "Gemini Live is unavailable due to a startup check failure."
+                return startup_message
 
             print(f"[GeminiLiveSkill] Launching {script_path}...")
             

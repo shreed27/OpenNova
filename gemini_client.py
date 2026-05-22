@@ -1,9 +1,6 @@
 import os
 import sys
 import asyncio
-import cv2
-import pyaudio
-import io
 from dotenv import load_dotenv
 
 # Try importing the new SDK
@@ -12,22 +9,51 @@ try:
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
-    print("Error: google-genai not installed.")
+    genai = None
 
-# Audio Configuration
-FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE_IN = 16000
 RATE_OUT = 24000
 CHUNK = 1024
 
-async def run_live_session():
+
+def _startup_error(message):
+    return f"Gemini Live is unavailable: {message}"
+
+
+def validate_runtime():
     load_dotenv()
+
+    if not HAS_GENAI:
+        return _startup_error("missing Python dependency `google-genai`. Run `pip install -r requirements.txt`.")
+
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("Error: GEMINI_API_KEY not found in environment variables.")
+        return _startup_error("`GEMINI_API_KEY` is not set in the environment.")
+
+    try:
+        import cv2  # noqa: F401
+    except ImportError:
+        return _startup_error("missing Python dependency `opencv-python`. Run `pip install -r requirements.txt`.")
+
+    try:
+        import pyaudio  # noqa: F401
+    except ImportError:
+        return _startup_error("missing Python dependency `PyAudio`. Run `pip install -r requirements.txt`.")
+
+    return None
+
+async def run_live_session():
+    startup_error = validate_runtime()
+    if startup_error:
+        print(startup_error)
         return
 
+    api_key = os.getenv("GEMINI_API_KEY")
+    import cv2
+    import pyaudio
+
+    format_type = pyaudio.paInt16
     model_id = "gemini-2.5-flash-native-audio-latest"
     print(f"[Gemini Live] Connecting to model: {model_id}")
     
@@ -36,17 +62,17 @@ async def run_live_session():
     # Helper to grab video frames
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("Error: Could not open camera.")
+        print(_startup_error("camera initialization failed: could not open the default camera."))
         return
 
     # Audio Setup
     p = pyaudio.PyAudio()
     
     try:
-        mic_stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE_IN, input=True, frames_per_buffer=CHUNK)
-        spk_stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE_OUT, output=True)
+        mic_stream = p.open(format=format_type, channels=CHANNELS, rate=RATE_IN, input=True, frames_per_buffer=CHUNK)
+        spk_stream = p.open(format=format_type, channels=CHANNELS, rate=RATE_OUT, output=True)
     except Exception as e:
-        print(f"Audio Error: {e}")
+        print(_startup_error(f"audio device initialization failed: {e}"))
         return
 
     print("[Gemini Live] Connected to peripherals.")
@@ -136,7 +162,7 @@ async def run_live_session():
             await asyncio.gather(send_audio(), capture_and_display(), transmit_video(), receive_audio())
 
     except Exception as e:
-        print(f"Session Error: {e}")
+        print(_startup_error(f"session startup failed: {e}"))
     finally:
         state["running"] = False
         if 'mic_stream' in locals(): 
@@ -151,7 +177,11 @@ async def run_live_session():
         print("[Gemini Live] Session Ended.")
 
 if __name__ == "__main__":
-    if not HAS_GENAI:
-        print("Please install google-genai first.")
-    else:
-        asyncio.run(run_live_session())
+    if "--preflight" in sys.argv:
+        startup_error = validate_runtime()
+        if startup_error:
+            print(startup_error)
+            raise SystemExit(1)
+        raise SystemExit(0)
+
+    asyncio.run(run_live_session())

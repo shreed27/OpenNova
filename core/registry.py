@@ -26,7 +26,11 @@ class SkillRegistry:
         spec = importlib.util.spec_from_file_location(module_name, file_path)
         if spec and spec.loader:
             module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            try:
+                spec.loader.exec_module(module)
+            except Exception as e:
+                print(f"Skipped skill module {module_name}: {e}")
+                return
             
             for name, obj in inspect.getmembers(module):
                 if inspect.isclass(obj) and issubclass(obj, Skill) and obj is not Skill:
