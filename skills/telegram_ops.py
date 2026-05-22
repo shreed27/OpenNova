@@ -39,20 +39,25 @@ class TelegramGatewaySkill(Skill):
                         offset = item["update_id"] + 1
                         
                         if "message" in item and "text" in item["message"]:
-                            chat_id = item["message"]["chat"]["id"]
+                            message = item["message"]
+                            chat_id = message["chat"]["id"]
                             self.last_chat_id = chat_id
-                            text = item["message"]["text"].strip()
-                            
-                            self._handle_command(chat_id, text)
+                            text = message["text"].strip()
+                            message_id = message.get("message_id")
+
+                            self._handle_command(chat_id, text, message_id=message_id)
             except Exception as e:
                 # If network drops, wait and retry
                 time.sleep(5)
                 
-    def _send_message(self, chat_id, text):
+    def _send_message(self, chat_id, text, reply_to_message_id=None):
         url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
-        requests.post(url, json={"chat_id": chat_id, "text": text})
+        payload = {"chat_id": chat_id, "text": text}
+        if reply_to_message_id:
+            payload["reply_parameters"] = {"message_id": int(reply_to_message_id)}
+        requests.post(url, json=payload)
 
-    def _handle_command(self, chat_id, text):
+    def _handle_command(self, chat_id, text, message_id=None):
         log_queue = self.context.get("log_queue")
         if log_queue:
             log_queue.put(f"<span style='color: #ff00ff;'>[TELEGRAM]</span> {text}")
@@ -69,7 +74,12 @@ class TelegramGatewaySkill(Skill):
         # Forward the command directly to JARVIS Engine via the queue
         command_queue = self.context.get("command_queue")
         if command_queue:
-            command_queue.put(text)
+            command_queue.put({
+                "source": "telegram",
+                "chat_id": str(chat_id),
+                "message_id": str(message_id) if message_id is not None else "",
+                "text": text,
+            })
             self._send_message(chat_id, f"Queued: {text}")
             
     def get_functions(self):
@@ -87,14 +97,15 @@ class TelegramGatewaySkill(Skill):
                     "type": "object",
                     "properties": {
                         "text": {"type": "string", "description": "The message text to send"},
-                        "chat_id": {"type": "string", "description": "The Telegram chat ID (if known). If empty, broadcasts to the last known chat ID."}
+                        "chat_id": {"type": "string", "description": "The Telegram chat ID (if known). If empty, broadcasts to the last known chat ID."},
+                        "reply_to_message_id": {"type": "string", "description": "Optional Telegram message ID to reply to for correlation."}
                     },
                     "required": ["text"]
                 }
             }
         }]
         
-    def send_telegram_message(self, text: str, chat_id: str = "") -> str:
+    def send_telegram_message(self, text: str, chat_id: str = "", reply_to_message_id: str = "") -> str:
         """Called by JARVIS Engine as a Tool"""
         target_chat = chat_id if chat_id else self.last_chat_id
         if not target_chat:
@@ -103,7 +114,7 @@ class TelegramGatewaySkill(Skill):
         if not self.bot_token:
             return "Error: TELEGRAM_BOT_TOKEN is not configured."
             
-        self._send_message(target_chat, text)
+        self._send_message(target_chat, text, reply_to_message_id=reply_to_message_id or None)
         return "Message sent successfully via Telegram."
 
 def get_skill():

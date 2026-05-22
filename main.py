@@ -5,6 +5,7 @@ import threading
 import time
 import queue
 from queue import Empty
+from typing import Any, Dict, Optional, Tuple
 from dotenv import load_dotenv
 from core.voice import speak, listen
 from core.registry import SkillRegistry
@@ -13,6 +14,37 @@ from gui.app import run_gui as run_gui_app
 
 # Load Env
 load_dotenv()
+
+
+def _normalize_queued_command(command: Any) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    if isinstance(command, dict):
+        text = command.get("text")
+        if isinstance(text, str):
+            return text, command
+        return None, command
+
+    if isinstance(command, str):
+        return command, None
+
+    return None, None
+
+
+def _send_telegram_response(registry: SkillRegistry, metadata: Optional[Dict[str, Any]], response: str):
+    if not metadata or metadata.get("source") != "telegram" or not response:
+        return
+
+    send_telegram_message = registry.get_function("send_telegram_message")
+    if not send_telegram_message:
+        return
+
+    try:
+        send_telegram_message(
+            text=response,
+            chat_id=str(metadata.get("chat_id", "")),
+            reply_to_message_id=str(metadata.get("message_id", "")),
+        )
+    except Exception as exc:
+        print(f"Failed to send Telegram response: {exc}")
 
 def jarvis_loop(context, registry, args):
     """
@@ -39,11 +71,13 @@ def jarvis_loop(context, registry, args):
 
     while True:
         user_query = None
+        command_metadata = None
         
         # 1. Check for Typed Commands (Highest Priority)
         try:
             if command_queue:
-                user_query = command_queue.get_nowait()
+                queued_command = command_queue.get_nowait()
+                user_query, command_metadata = _normalize_queued_command(queued_command)
         except Empty:
             pass
             
@@ -92,6 +126,8 @@ def jarvis_loop(context, registry, args):
         try:
             log(f"<span style='color: #FFA500;'>[JARVIS] Processing: {clean_query}...</span>")
             response = jarvis.run_conversation(clean_query)
+            if response:
+                _send_telegram_response(registry, command_metadata, response)
             
             if pause_event and pause_event.is_set() and not args.text:
                 log("<span style='color: #555;'>[SYS] Skipped speech due to pause.</span>")
@@ -105,6 +141,7 @@ def jarvis_loop(context, registry, args):
                     speak(response)
         except Exception as e:
             log(f"<span style='color: #FF3333;'>[ERROR] Main Loop Error: {e}</span>")
+            _send_telegram_response(registry, command_metadata, f"System error: {e}")
             if not args.text:
                 speak("System error.")
 
