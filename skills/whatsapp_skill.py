@@ -5,7 +5,7 @@ from skills.whatsapp.whatsapp_client import WhatsAppClient
 
 class WhatsappSkill(Skill):
     """
-    Skill for sending WhatsApp messages using Selenium and a local contact list.
+    Skill for sending WhatsApp messages using Selenium.
     """
     
     def __init__(self):
@@ -18,6 +18,8 @@ class WhatsappSkill(Skill):
         
     def _load_contacts(self):
         contacts_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "contacts.json")
+        if not os.path.exists(contacts_path):
+            return {}
         try:
             with open(contacts_path, 'r') as f:
                 return json.load(f)
@@ -62,22 +64,19 @@ class WhatsappSkill(Skill):
 
     def send_whatsapp_message(self, name, message):
         """
-        Sends a WhatsApp message to a contact by name.
+        Sends a WhatsApp message by existing chat name when possible,
+        with optional phone-number fallback from contacts.json.
         """
-        # 1. Normalize name
         clean_name = name.lower().strip()
-        
-        # 2. Lookup Number
         phone_number = self.contacts.get(clean_name)
-        
-        if not phone_number:
-            # Fuzzy match or error
-            return f"Error: Contact '{name}' not found in contacts.json. Available: {list(self.contacts.keys())}"
-            
-        # 3. Send Message via Client
+
         try:
             client = self._get_client()
-            result = client.send_message(phone_number, message)
+            result = client.send_message(
+                contact_name=name.strip(),
+                message=message,
+                phone_number=phone_number,
+            )
             return result
         except Exception as e:
             return f"Error sending message: {e}"
