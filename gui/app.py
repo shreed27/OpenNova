@@ -9,12 +9,27 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QPointF, QRectF
 from PyQt6.QtGui import QPainter, QColor, QPen, QBrush, QPolygonF, QFont
+from gui.gemini_status import build_gemini_live_status, CHECKING_COLOR
 
 # --- Colors ---
 PRIMARY_COLOR = QColor("#00FFFF")  # Cyan
 ACCENT_COLOR = QColor("#FFFFFF")   # White
 BG_COLOR = QColor("#000000")       # Black
 WARNING_COLOR = QColor("#FFA500")  # Orange (for Pause)
+
+
+class GeminiLiveStatusThread(QThread):
+    status_signal = pyqtSignal(dict)
+
+    def run(self):
+        try:
+            from gemini_client import validate_runtime
+
+            startup_error = validate_runtime()
+        except Exception as exc:
+            startup_error = f"Gemini Live is unavailable: status check failed: {exc}"
+
+        self.status_signal.emit(build_gemini_live_status(startup_error))
 
 # --- Mic Monitor Thread ---
 class AudioMonitorThread(QThread):
@@ -302,6 +317,13 @@ class JarvisGUI(QMainWindow):
         header.setStyleSheet("color: #00FFFF; font-family: 'Courier New'; font-size: 16px; font-weight: bold;")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         main_layout.addWidget(header)
+
+        self.gemini_status_label = QLabel("GEMINI LIVE: CHECKING...")
+        self.gemini_status_label.setStyleSheet(
+            f"color: {CHECKING_COLOR}; font-family: 'Courier New'; font-size: 12px; font-weight: bold;"
+        )
+        self.gemini_status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        main_layout.addWidget(self.gemini_status_label)
         
         # Top HUD row
         hud_layout = QHBoxLayout()
@@ -357,12 +379,45 @@ class JarvisGUI(QMainWindow):
         self.mic_thread.mic_level_signal.connect(self.reactor.set_mic_level)
         self.mic_thread.mic_level_signal.connect(self.right_panel.set_mic_level)
         self.mic_thread.start()
+
+        self.last_gemini_status_detail = None
+        self.gemini_status_thread = None
+        self.refresh_gemini_live_status()
+
+        self.gemini_status_timer = QTimer(self)
+        self.gemini_status_timer.timeout.connect(self.refresh_gemini_live_status)
+        self.gemini_status_timer.start(30000)
         
         # Setup Log Polling
         if self.log_queue:
             self.log_timer = QTimer(self)
             self.log_timer.timeout.connect(self.poll_logs)
             self.log_timer.start(100)
+
+    def refresh_gemini_live_status(self):
+        if self.gemini_status_thread and self.gemini_status_thread.isRunning():
+            return
+
+        self.gemini_status_label.setText("GEMINI LIVE: CHECKING...")
+        self.gemini_status_label.setStyleSheet(
+            f"color: {CHECKING_COLOR}; font-family: 'Courier New'; font-size: 12px; font-weight: bold;"
+        )
+
+        self.gemini_status_thread = GeminiLiveStatusThread(self)
+        self.gemini_status_thread.status_signal.connect(self.apply_gemini_live_status)
+        self.gemini_status_thread.start()
+
+    def apply_gemini_live_status(self, status):
+        self.gemini_status_label.setText(status["label"])
+        self.gemini_status_label.setStyleSheet(
+            f"color: {status['color']}; font-family: 'Courier New'; font-size: 12px; font-weight: bold;"
+        )
+        self.gemini_status_label.setToolTip(status["detail"])
+
+        if status["detail"] != self.last_gemini_status_detail:
+            prefix = "#00FFFF" if "READY" in status["label"] else "#FFA500"
+            self.terminal.append(f"<span style='color: {prefix};'>[SYS]</span> {status['detail']}")
+            self.last_gemini_status_detail = status["detail"]
 
     def submit_command(self):
         text = self.input_bar.text().strip()
